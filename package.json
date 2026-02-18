@@ -1,0 +1,14 @@
+{
+    "name": "feather-white-website",
+    "version": "1.0.0",
+    "description": "Root package.json to run both backend and frontend",
+    "scripts": {
+        "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install",
+        "server": "cd backend && npm run dev",
+        "client": "cd frontend && npm run dev",
+        "dev": "concurrently \"npm run server\" \"npm run client\""
+    },
+    "devDependencies": {
+        "concurrently": "^8.2.2"
+    }
+}
