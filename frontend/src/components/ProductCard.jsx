@@ -1,9 +1,9 @@
 import React from 'react';
-import { useDispatch } from 'react-redux';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { Star } from 'lucide-react';
-import { addToCart } from '../redux/cartSlice';
+import { optimizeCloudinaryUrl } from '../utils/cloudinary';
+
 
 const ProductCard = ({ product }) => {
     // Dispatch is not used here anymore as we moved Add to Cart to details page, 
@@ -22,10 +22,11 @@ const ProductCard = ({ product }) => {
                 {/* Image Container */}
                 <div className="relative aspect-[4/5] overflow-hidden">
                     <img
-                        src={product.image}
+                        src={optimizeCloudinaryUrl(product.image, 'w_600,h_750,c_fill,q_auto,f_auto')}
                         alt={product.name}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />
+
 
                     {/* Badges */}
                     {product.isNew && (
@@ -70,11 +71,15 @@ const ProductCard = ({ product }) => {
                                 ₹{product.price.toLocaleString('en-IN')}
                             </span>
                         </div>
-                        {product.stock <= 5 && product.stock > 0 && (
-                            <span className="text-red-400 text-xs font-medium">
-                                Only {product.stock} left!
+                        {product.stockStatus === 'Out of Stock' ? (
+                            <span className="text-red-400 text-xs font-medium bg-red-400/10 px-2 py-1 rounded">
+                                Out of Stock
                             </span>
-                        )}
+                        ) : product.stockStatus === 'Coming Soon' ? (
+                            <span className="text-blue-400 text-xs font-medium bg-blue-400/10 px-2 py-1 rounded">
+                                Coming Soon
+                            </span>
+                        ) : null}
                     </div>
                 </div>
             </Link>

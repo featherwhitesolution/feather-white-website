@@ -39,6 +39,11 @@ const userSchema = new mongoose.Schema({
     resetPasswordExpire: {
         type: Date,
     },
+    googleId: {
+        type: String,
+        unique: true,
+        sparse: true
+    },
     isAdmin: {
         type: Boolean,
         default: false,

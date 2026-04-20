@@ -4,24 +4,66 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { clearCart } from '../redux/cartSlice';
 import axios from 'axios';
+import { optimizeCloudinaryUrl } from '../utils/cloudinary';
 
 const Checkout = () => {
+    const { userInfo } = useSelector(state => state.user);
     const { items, totalAmount, totalQuantity } = useSelector(state => state.cart);
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
-        fullName: '',
-        email: '',
-        phone: '',
-        address: '',
-        city: '',
-        state: '',
-        postalCode: '',
+        fullName: userInfo?.name || '',
+        email: userInfo?.email || '',
+        phone: userInfo?.mobile || '',
+        address: userInfo?.shippingAddress?.addressLine || '',
+        city: userInfo?.shippingAddress?.city || '',
+        state: userInfo?.shippingAddress?.state || '',
+        postalCode: userInfo?.shippingAddress?.pincode || '',
         country: 'India'
     });
 
-    const [paymentMethod, setPaymentMethod] = useState('COD');
+    const [paymentMethod, setPaymentMethod] = useState('');
+    const [paymentConfig, setPaymentConfig] = useState({
+        cashOnDelivery: true,
+        onlinePayment: false,
+    });
+
+    React.useEffect(() => {
+        const fetchPaymentSettings = async () => {
+            try {
+                const { data } = await axios.get('/api/home/payment');
+                if (data?.data) {
+                    setPaymentConfig(data.data);
+                    // Set default payment method based on availability
+                    if (data.data.cashOnDelivery) {
+                        setPaymentMethod('COD');
+                    } else if (data.data.onlinePayment) {
+                        setPaymentMethod('Online');
+                    }
+                } else {
+                    setPaymentMethod('COD'); // Fallback
+                }
+            } catch (error) {
+                console.error('Error fetching payment settings:', error);
+                setPaymentMethod('COD');
+            }
+        };
+        fetchPaymentSettings();
+        
+        if (userInfo) {
+            setFormData(prev => ({
+                ...prev,
+                fullName: prev.fullName || userInfo.name || '',
+                email: prev.email || userInfo.email || '',
+                phone: prev.phone || userInfo.mobile || '',
+                address: prev.address || userInfo.shippingAddress?.addressLine || '',
+                city: prev.city || userInfo.shippingAddress?.city || '',
+                state: prev.state || userInfo.shippingAddress?.state || '',
+                postalCode: prev.postalCode || userInfo.shippingAddress?.pincode || ''
+            }));
+        }
+    }, [userInfo]);
     const [isProcessing, setIsProcessing] = useState(false);
     const [orderPlaced, setOrderPlaced] = useState(false);
     const [orderId, setOrderId] = useState(null);
@@ -30,24 +72,35 @@ const Checkout = () => {
     // Calculate totals
     const shipping = totalAmount > 999 ? 0 : 50;
     const itemsPrice = totalAmount;
-    const taxPrice = 0; // Assuming inclusive for simplicity or 0
+    const taxPrice = 0; 
     const finalTotal = itemsPrice + shipping + taxPrice;
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
+    const loadRazorpay = () => {
+        return new Promise((resolve) => {
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.onload = () => {
+                resolve(true);
+            };
+            script.onerror = () => {
+                resolve(false);
+            };
+            document.body.appendChild(script);
+        });
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsProcessing(true);
 
-        // Generate a random Order ID (Mock)
-        const newOrderId = `FW-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
-
         const orderData = {
             orderItems: items.map(item => ({
                 name: item.name,
-                qty: item.quantity,
+                quantity: item.quantity,
                 image: item.image,
                 price: item.price,
                 product: item.id
@@ -58,39 +111,102 @@ const Checkout = () => {
                 postalCode: formData.postalCode,
                 country: formData.country,
                 state: formData.state,
-                phone: formData.phone // Adding phone here as valuable info
+                phone: formData.phone
             },
-            paymentMethod,
+            paymentMethod: paymentMethod === 'COD' ? 'Cash on Delivery' : 'Online Payment',
             itemsPrice,
             taxPrice,
             shippingPrice: shipping,
             totalPrice: finalTotal,
-            user: null // Guest checkout for now
+            user: userInfo ? userInfo._id : null
         };
 
         try {
-            // Attempt to send to backend
-            // const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-            // const response = await axios.post(`${API_URL}/api/orders`, orderData);
+            if (paymentMethod === 'Online') {
+                const res = await loadRazorpay();
+                if (!res) {
+                    alert('Razorpay SDK failed to load. Are you online?');
+                    setIsProcessing(false);
+                    return;
+                }
 
-            // For now, simulate success after delay since backend might not be ready
-            await new Promise(resolve => setTimeout(resolve, 1500));
+                // 1. Create order on backend (Razorpay Order)
+                const { data: rzpOrder } = await axios.post('/api/orders/razorpay', { amount: finalTotal });
 
-            setOrderId(newOrderId);
-            setOrderDate(new Date().toLocaleDateString('en-IN', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            }));
-            setOrderPlaced(true);
-            dispatch(clearCart());
+                const options = {
+                    key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+                    amount: rzpOrder.amount,
+                    currency: rzpOrder.currency,
+                    name: "Feather White",
+                    description: "Skincare Purchase",
+                    image: "/logo_dark.png", 
+                    order_id: rzpOrder.id,
+                    handler: async function (response) {
+                        try {
+                            // 2. Once payment done, create the actual order in DB
+                            const { data: createdOrder } = await axios.post('/api/orders', {
+                                ...orderData,
+                                razorpayOrderId: rzpOrder.id
+                            });
+
+                            // 3. Verify payment on backend
+                            const { data: verification } = await axios.post('/api/orders/razorpay/verify', {
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                                orderId: createdOrder._id
+                            });
+
+                            if (verification.success) {
+                                setOrderId(`FW-${createdOrder._id.toString().slice(-6).toUpperCase()}`);
+                                setOrderDate(new Date().toLocaleDateString('en-IN', {
+                                    year: 'numeric', month: 'long', day: 'numeric',
+                                    hour: '2-digit', minute: '2-digit'
+                                }));
+                                setOrderPlaced(true);
+                                dispatch(clearCart());
+                            }
+                        } catch (err) {
+                            console.error("Verification Error:", err);
+                            alert("Payment verification failed. Please contact support.");
+                        }
+                    },
+                    prefill: {
+                        name: formData.fullName,
+                        email: formData.email,
+                        contact: formData.phone
+                    },
+                    notes: {
+                        address: formData.address
+                    },
+                    theme: {
+                        color: "#C5A059" // Feather White Gold
+                    }
+                };
+
+                const paymentObject = new window.Razorpay(options);
+                paymentObject.open();
+                setIsProcessing(false);
+
+            } else {
+                // Cash on Delivery Logic
+                const { data } = await axios.post('/api/orders', orderData);
+                setOrderId(`FW-${data._id.toString().slice(-6).toUpperCase()}`);
+                setOrderDate(new Date().toLocaleDateString('en-IN', {
+                    year: 'numeric', month: 'long', day: 'numeric'
+                }));
+                setOrderPlaced(true);
+                dispatch(clearCart());
+            }
         } catch (error) {
             console.error('Error placing order:', error);
-            alert('Failed to place order. Please try again.');
+            const serverError = error.response?.data?.error;
+            const errorMsg = serverError ? JSON.stringify(serverError) : (error.response?.data?.message || error.message || 'Unknown error');
+            alert('Failed to place order: ' + errorMsg);
         } finally {
-            setIsProcessing(false);
+            if (paymentMethod !== 'Online') {
+                setIsProcessing(false);
+            }
         }
     };
 
@@ -260,27 +376,53 @@ const Checkout = () => {
                         <div className="bg-navy-800/50 p-6 rounded-xl border border-white/10">
                             <h2 className="text-xl font-serif text-cream-100 mb-4">Payment Method</h2>
                             <div className="space-y-2">
-                                <label className="flex items-center space-x-3 p-3 border border-white/10 rounded-lg cursor-pointer hover:bg-white/5 transition-colors">
-                                    <input
-                                        type="radio"
-                                        name="paymentMethod"
-                                        value="COD"
-                                        checked={paymentMethod === 'COD'}
-                                        onChange={(e) => setPaymentMethod(e.target.value)}
-                                        className="text-gold-500 focus:ring-gold-500 bg-navy-900 border-white/30"
-                                    />
-                                    <span>Cash on Delivery (COD)</span>
-                                </label>
-                                <label className="flex items-center space-x-3 p-3 border border-white/10 rounded-lg cursor-pointer hover:bg-white/5 transition-colors opacity-60">
-                                    <input
-                                        type="radio"
-                                        name="paymentMethod"
-                                        value="Online"
-                                        disabled
-                                        className="text-gold-500 focus:ring-gold-500 bg-navy-900 border-white/30"
-                                    />
-                                    <span>Online Payment (Coming Soon)</span>
-                                </label>
+                                {paymentConfig.cashOnDelivery && (
+                                    <label className="flex items-center space-x-3 p-4 border border-white/10 rounded-xl cursor-pointer hover:bg-white/5 transition-all group">
+                                        <input
+                                            type="radio"
+                                            name="paymentMethod"
+                                            value="COD"
+                                            checked={paymentMethod === 'COD'}
+                                            onChange={(e) => setPaymentMethod(e.target.value)}
+                                            className="w-5 h-5 text-gold-500 focus:ring-gold-500 bg-navy-900 border-white/30 transition-all cursor-pointer"
+                                        />
+                                        <div className="flex-1">
+                                            <span className="block font-bold text-cream-100">Cash on Delivery (COD)</span>
+                                            <span className="text-xs text-gray-500">Pay when your order arrives.</span>
+                                        </div>
+                                    </label>
+                                )}
+
+                                {paymentConfig.onlinePayment ? (
+                                    <label className="flex items-center space-x-3 p-4 border border-white/10 rounded-xl cursor-pointer hover:bg-white/5 transition-all group">
+                                        <input
+                                            type="radio"
+                                            name="paymentMethod"
+                                            value="Online"
+                                            checked={paymentMethod === 'Online'}
+                                            onChange={(e) => setPaymentMethod(e.target.value)}
+                                            className="w-5 h-5 text-gold-500 focus:ring-gold-500 bg-navy-900 border-white/30 transition-all cursor-pointer"
+                                        />
+                                        <div className="flex-1">
+                                            <span className="block font-bold text-cream-100">Online Payment</span>
+                                            <span className="text-xs text-gray-500">Secure payment via Cards, UPI, or Net Banking.</span>
+                                        </div>
+                                    </label>
+                                ) : (
+                                    <div className="flex items-center space-x-3 p-4 border border-white/5 rounded-xl opacity-30 cursor-not-allowed">
+                                        <div className="w-5 h-5 rounded-full border-2 border-white/20" />
+                                        <div className="flex-1">
+                                            <span className="block font-bold">Online Payment</span>
+                                            <span className="text-xs">Temporarily unavailable</span>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {!paymentConfig.cashOnDelivery && !paymentConfig.onlinePayment && (
+                                    <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-500 text-sm font-bold text-center">
+                                        No payment methods currently available. Please contact support.
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -294,7 +436,7 @@ const Checkout = () => {
                                 {items.map((item) => (
                                     <div key={item.id} className="flex gap-4 items-center">
                                         <div className="relative w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
-                                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                            <img src={optimizeCloudinaryUrl(item.image, 'w_100,h_100,c_fill,q_auto,f_auto')} alt={item.name} className="w-full h-full object-cover" />
                                             <span className="absolute top-0 right-0 bg-gold-500 text-navy-900 text-xs font-bold w-5 h-5 flex items-center justify-center rounded-bl-md">
                                                 {item.quantity}
                                             </span>

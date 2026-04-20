@@ -12,6 +12,7 @@ export default {
           800: '#064e3b',
         },
         navy: {
+          950: '#001333', // Deepest Navy
           900: '#002366', // Royal Navy
           800: '#003380',
           700: '#0047b3',

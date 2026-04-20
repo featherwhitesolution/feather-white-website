@@ -1,112 +1,157 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Mail, MapPin, Facebook, Instagram, Youtube, Phone } from 'lucide-react';
-// Using a simple Phone icon as placeholder for WhatsApp if exact icon not available in basic set, 
-// or can import from 'react-icons/fa' if installed. 
-// Plan said Lucide-React, so I'll stick to Lucide. 
-// For WhatsApp, I'll use MessageCircle or phone.
+import { Mail, MapPin, Facebook, Instagram, Youtube, Phone, ArrowRight } from 'lucide-react';
+import api from '../utils/api';
+import { SocialConnect } from './ui/connect-with-us';
 
 const Footer = () => {
+    const [social, setSocial] = useState({
+        whatsapp: '917977287353',
+        facebook: '#',
+        instagram: '#',
+        youtube: '#',
+        email: 'support@featherwhite.com',
+        location: 'Mumbai, Maharashtra'
+    });
+
+    useEffect(() => {
+        const fetchSocial = async () => {
+            try {
+                const { data } = await api.get('/api/home/social');
+                if (data && data.data) {
+                    setSocial(data.data);
+                }
+            } catch (error) {
+                console.error('Error fetching social links:', error);
+            }
+        };
+        fetchSocial();
+    }, []);
+
+    const getLink = (url) => {
+        if (!url || url === '#' || url === '') return '#';
+        if (url.startsWith('http')) return url;
+        return `https://${url}`;
+    };
+
     return (
-        <footer className="bg-navy-900 text-cream-100 pt-16 pb-8 border-t-4 border-gold-500">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
+        <>
+            <SocialConnect socialData={social} getLink={getLink} />
+            <footer className="bg-navy-950 text-cream-100 pt-20 pb-12 overflow-hidden relative">
+                {/* Decorative Elements */}
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-gold-500 to-transparent opacity-30" />
+                <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-gold-600/5 rounded-full blur-[120px]" />
+                
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-16">
 
-                    {/* Brand & About */}
-                    <div className="space-y-4">
-                        <h3 className="font-serif text-2xl font-bold text-gold-500">Feather White</h3>
-                        <p className="font-sans text-sm leading-relaxed text-cream-100/80">
-                            Experience the royalty of nature with our premium cosmetic collection.
-                            Designed for elegance, crafted for you.
-                        </p>
-                    </div>
+                        {/* Brand & Mission */}
+                        <div className="space-y-6">
+                            <h3 className="font-serif text-3xl font-bold premium-text-gradient">Feather White</h3>
+                            <p className="text-sm leading-relaxed text-cream-100/60 font-light">
+                                Crafting the pinnacle of botanical luxury. We transform nature's purest essences into exquisite skincare rituals for the discerning individual.
+                            </p>
+                        </div>
 
-                    {/* Quick Links */}
-                    <div className="space-y-4">
-                        <h4 className="font-serif text-lg font-semibold text-gold-500">Quick Links</h4>
-                        <ul className="space-y-2 font-sans text-sm">
-                            <li><Link to="/" className="hover:text-gold-500 transition-colors">Home</Link></li>
-                            <li><Link to="/products" className="hover:text-gold-500 transition-colors">Shop Collection</Link></li>
-                            <li><Link to="/about" className="hover:text-gold-500 transition-colors">Our Heritage</Link></li>
-                        </ul>
-                    </div>
+                        {/* Navigation */}
+                        <div className="space-y-6">
+                            <h4 className="text-[10px] uppercase tracking-[0.4em] font-black text-gold-500/50">Navigation</h4>
+                            <ul className="space-y-4">
+                                {['Home', 'Products', 'Our Heritage'].map((item) => (
+                                    <li key={item}>
+                                        <Link 
+                                            to={item === 'Home' ? '/' : item === 'Products' ? '/products' : '/about'} 
+                                            className="text-sm text-cream-100/70 hover:text-gold-400 transition-all flex items-center group"
+                                        >
+                                            <ArrowRight className="w-0 h-3 opacity-0 group-hover:w-4 group-hover:opacity-100 transition-all mr-0 group-hover:mr-2" />
+                                            {item}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
 
-                    {/* Policies */}
-                    <div className="space-y-4">
-                        <h4 className="font-serif text-lg font-semibold text-gold-500">Policies</h4>
-                        <ul className="space-y-2 font-sans text-sm">
-                            <li><Link to="/policies/privacy" className="hover:text-gold-500 transition-colors">Privacy Policy</Link></li>
-                            <li><Link to="/policies/returns" className="hover:text-gold-500 transition-colors">Return Policy</Link></li>
-                            <li><Link to="/policies/disclaimer" className="hover:text-gold-500 transition-colors">Disclaimer</Link></li>
-                        </ul>
-                    </div>
+                        {/* Policies */}
+                        <div className="space-y-6">
+                            <h4 className="text-[10px] uppercase tracking-[0.4em] font-black text-gold-500/50">Policies</h4>
+                            <ul className="space-y-4">
+                                {[
+                                    { name: 'Terms of Service', path: '/policies/terms' },
+                                    { name: 'Privacy Policy', path: '/policies/privacy' },
+                                    { name: 'Return Policy', path: '/policies/returns' },
+                                    { name: 'Disclaimer', path: '/policies/disclaimer' }
+                                ].map((policy) => (
+                                    <li key={policy.name}>
+                                        <Link to={policy.path} className="text-sm text-cream-100/70 hover:text-gold-400 transition-all">
+                                            {policy.name}
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
 
-                    {/* Connect Us */}
-                    <div className="space-y-6">
-                        <h4 className="font-serif text-lg font-semibold text-gold-500">Connect Us</h4>
-                        <div className="space-y-4 font-sans text-sm">
+                        {/* Contact & Connect */}
+                        <div className="space-y-8">
+                            <h4 className="text-[10px] uppercase tracking-[0.4em] font-black text-gold-500/50">Get in Touch</h4>
+                            <div className="space-y-5">
+                                <a 
+                                    href={`mailto:${social.email}`} 
+                                    className="flex items-center space-x-4 text-cream-100/70 hover:text-gold-400 transition-all group"
+                                >
+                                    <div className="p-2 rounded-lg bg-white/5 border border-white/5 group-hover:border-gold-500/30">
+                                        <Mail className="w-4 h-4" />
+                                    </div>
+                                    <span className="text-xs truncate">{social.email}</span>
+                                </a>
 
-                            {/* WhatsApp */}
-                            <a
-                                href="https://wa.me/917977287353"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center space-x-3 group hover:bg-navy-800 p-2 rounded-lg transition-colors -ml-2"
-                            >
-                                <div className="bg-green-600 p-2 rounded-full text-white group-hover:scale-110 transition-transform">
-                                    {/* Simulating WhatsApp Icon */}
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="20" height="20"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    >
-                                        <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path>
-                                    </svg>
+                                <div className="flex items-center space-x-4 text-cream-100/70">
+                                    <div className="p-2 rounded-lg bg-white/5 border border-white/5">
+                                        <MapPin className="w-4 h-4" />
+                                    </div>
+                                    <span className="text-xs">{social.location}</span>
                                 </div>
-                                <span className="font-medium">Chat with Us</span>
-                            </a>
+                            </div>
 
-                            {/* Email */}
-                            <a href="mailto:samsungin123@gmail.com" className="flex items-center space-x-3 hover:text-gold-500 transition-colors">
-                                <Mail className="w-5 h-5 text-gold-500" />
-                                <span>samsungin123@gmail.com</span>
-                            </a>
-
-                            {/* Location */}
-                            <div className="flex items-center space-x-3">
-                                <MapPin className="w-5 h-5 text-gold-500" />
-                                <span>Mumbai, Maharashtra</span>
+                            {/* Social Grid */}
+                            <div className="flex space-x-3 pt-6 border-t border-white/5">
+                                {['facebook', 'instagram', 'youtube'].map((platform) => {
+                                    const Icon = platform === 'facebook' ? Facebook : platform === 'instagram' ? Instagram : Youtube;
+                                    return (
+                                        <a 
+                                            key={platform}
+                                            href={getLink(social[platform])} 
+                                            target="_blank" 
+                                            rel="noopener noreferrer" 
+                                            className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-cream-100/40 hover:text-gold-400 hover:border-gold-500/50 hover:-translate-y-1 transition-all duration-300"
+                                        >
+                                            <Icon className="w-5 h-5" />
+                                        </a>
+                                    );
+                                })}
                             </div>
                         </div>
+                    </div>
 
-                        {/* Social Icons */}
-                        <div className="flex space-x-4 pt-2">
-                            <a href="#" className="text-cream-100 hover:text-gold-500 hover:scale-110 transition-all duration-300">
-                                <Facebook className="w-6 h-6" />
-                            </a>
-                            <a href="#" className="text-cream-100 hover:text-gold-500 hover:scale-110 transition-all duration-300">
-                                <Instagram className="w-6 h-6" />
-                            </a>
-                            <a href="#" className="text-cream-100 hover:text-gold-500 hover:scale-110 transition-all duration-300">
-                                <Youtube className="w-6 h-6" />
-                            </a>
+                    {/* Footer Bottom */}
+                    <div className="mt-20 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+                        <p className="text-[10px] text-cream-100/30 uppercase tracking-[0.2em]">
+                            © {new Date().getFullYear()} Feather White. Artisanal Skincare.
+                        </p>
+                        
+                        <div className="flex items-center gap-4 group cursor-default">
+                            <span className="text-[10px] uppercase tracking-[0.3em] text-gold-500/30 group-hover:text-gold-500 transition-colors">
+                                Designed with Precision by
+                            </span>
+                            <span className="text-xs font-serif italic text-cream-100/60 group-hover:text-white transition-all">
+                                Farhan Ahmed Shamsi
+                            </span>
                         </div>
                     </div>
                 </div>
-
-                {/* Bottom */}
-                <div className="mt-16 pt-8 border-t border-cream-100/10 text-center font-sans text-xs text-cream-100/50">
-                    <p>© {new Date().getFullYear()} Feather White. All Rights Reserved.</p>
-                    <p className="mt-2 text-cream-100/30">Website designed by Farhan Ahmed Shamsi</p>
-                </div>
-            </div>
-        </footer>
+            </footer>
+        </>
     );
 };
 
 export default Footer;
+

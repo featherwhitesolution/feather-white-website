@@ -30,8 +30,11 @@ const orderSchema = new mongoose.Schema({
     paymentMethod: {
         type: String,
         required: true,
-        default: 'Cash on Delivery', // or 'PayPal', 'Stripe'
+        default: 'Cash on Delivery',
     },
+    itemsPrice: { type: Number, required: true, default: 0.0 },
+    taxPrice: { type: Number, required: true, default: 0.0 },
+    shippingPrice: { type: Number, required: true, default: 0.0 },
     totalPrice: {
         type: Number,
         required: true,
@@ -53,12 +56,21 @@ const orderSchema = new mongoose.Schema({
     deliveredAt: {
         type: Date,
     },
-    // Shiprocket Integration
+    // Status tracking
+    status: {
+        type: String,
+        required: true,
+        default: 'Processing',
+        enum: ['Processing', 'Shipped', 'Delivered', 'Cancelled']
+    },
     shiprocketOrderId: { type: String },
     shipmentId: { type: String },
     awbCode: { type: String },
     courierName: { type: String },
     trackingUrl: { type: String },
+    razorpayOrderId: { type: String },
+    razorpayPaymentId: { type: String },
+    razorpaySignature: { type: String },
 }, {
     timestamps: true,
 });

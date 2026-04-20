@@ -24,12 +24,23 @@ const productSchema = new mongoose.Schema({
         default: 'All',
     },
     image: {
-        type: String, // URL to image
+        type: String, // URL to primary image
         required: true,
     },
-    stock: {
-        type: Number,
+    additionalImages: [{
+        type: String, // URLs to secondary images/gallery
+    }],
+    stockStatus: {
+        type: String,
+        enum: ['In Stock', 'Out of Stock', 'Coming Soon'],
+        default: 'In Stock',
         required: true,
+    },
+    originalPrice: {
+        type: Number,
+    },
+    discount: {
+        type: Number,
         default: 0,
     },
     isFeatured: {

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { sendOtp, verifyOtp, registerUser, resetAuthFlow, forgotPassword, loginWithPassword } from '../redux/userSlice';
+import { sendOtp, verifyOtp, registerUser, resetAuthFlow, forgotPassword, loginWithPassword, googleLogin } from '../redux/userSlice';
 import { useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import { X, Check } from 'lucide-react';
 
 const LoginModal = ({ isOpen, onClose }) => {
@@ -86,6 +87,10 @@ const LoginModal = ({ isOpen, onClose }) => {
         dispatch(loginWithPassword({ email: loginEmail, password }));
     };
 
+    const handleGoogleSuccess = (credentialResponse) => {
+        dispatch(googleLogin(credentialResponse.credential));
+    };
+
     // Close on userInfo update (successful login)
     useEffect(() => {
         if (userInfo) onClose();
@@ -142,8 +147,22 @@ const LoginModal = ({ isOpen, onClose }) => {
                             {loading ? 'Sending...' : 'Send OTP'}
                         </button>
 
-                        <div className="text-center mt-4 text-xs text-gray-500">
+                        <div className="text-center mt-4 text-xs text-gray-500 mb-6">
                             <span className="cursor-pointer hover:text-gold-400" onClick={() => setView('login-password')}>Or login with Password</span>
+                        </div>
+
+                        <div className="relative pt-6 border-t border-navy-700 flex flex-col items-center">
+                            <span className="absolute -top-3 bg-navy-900 px-4 text-[10px] text-gray-500 uppercase tracking-widest">Quick Login</span>
+                            <div className="w-full">
+                                <GoogleLogin
+                                    onSuccess={handleGoogleSuccess}
+                                    onError={() => alert('Google Login Failed')}
+                                    useOneTap
+                                    theme="filled_blue"
+                                    shape="circle"
+                                    width="100%"
+                                />
+                            </div>
                         </div>
                     </form>
                 )}
@@ -271,8 +290,21 @@ const LoginModal = ({ isOpen, onClose }) => {
                             {loading ? 'Logging In...' : 'Login'}
                         </button>
 
-                        <div className="text-center mt-4 text-xs text-gray-500">
+                        <div className="text-center mt-4 text-xs text-gray-500 mb-6">
                             <span className="cursor-pointer hover:text-gold-400" onClick={() => setView('mobile')}>Back to OTP Login</span>
+                        </div>
+
+                        <div className="relative pt-6 border-t border-navy-700 flex flex-col items-center">
+                            <span className="absolute -top-3 bg-navy-900 px-4 text-[10px] text-gray-500 uppercase tracking-widest">Quick Login</span>
+                            <div className="w-full">
+                                <GoogleLogin
+                                    onSuccess={handleGoogleSuccess}
+                                    onError={() => alert('Google Login Failed')}
+                                    theme="filled_blue"
+                                    shape="circle"
+                                    width="100%"
+                                />
+                            </div>
                         </div>
                     </form>
                 )}

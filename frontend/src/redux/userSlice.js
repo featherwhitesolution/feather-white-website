@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // Helper to get base URL
 // Helper to get base URL
-const API_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api/users` : 'http://localhost:5000/api/users';
+const API_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api/users` : '/api/users';
 
 // Async Thunks
 export const sendOtp = createAsyncThunk('user/sendOtp', async (mobile, { rejectWithValue }) => {
@@ -74,6 +74,36 @@ export const resetPassword = createAsyncThunk('user/resetPassword', async ({ tok
     }
 });
 
+export const googleLogin = createAsyncThunk('user/googleLogin', async (idToken, { rejectWithValue }) => {
+    try {
+        const response = await axios.post(`${API_URL}/google-login`, { idToken });
+        if (response.data.token) {
+            localStorage.setItem('userInfo', JSON.stringify(response.data));
+        }
+        return response.data;
+    } catch (error) {
+        return rejectWithValue(error.response && error.response.data.message ? error.response.data.message : error.message);
+    }
+});
+
+export const getProfile = createAsyncThunk('user/getProfile', async (_, { getState, rejectWithValue }) => {
+    try {
+        const { user: { userInfo } } = getState();
+        const config = {
+            headers: {
+                Authorization: `Bearer ${userInfo.token}`,
+            },
+        };
+        const response = await axios.get(`${API_URL}/profile`, config);
+        // Merge fresh data with existing token
+        const updatedInfo = { ...userInfo, ...response.data };
+        localStorage.setItem('userInfo', JSON.stringify(updatedInfo));
+        return updatedInfo;
+    } catch (error) {
+        return rejectWithValue(error.response && error.response.data.message ? error.response.data.message : error.message);
+    }
+});
+
 
 const userSlice = createSlice({
     name: 'user',
@@ -107,6 +137,10 @@ const userSlice = createSlice({
             state.error = null;
             state.forgotPasswordSuccess = false;
             state.resetPasswordSuccess = false;
+        },
+        updateUserInfo: (state, action) => {
+            state.userInfo = { ...state.userInfo, ...action.payload };
+            localStorage.setItem('userInfo', JSON.stringify(state.userInfo));
         }
     },
     extraReducers: (builder) => {
@@ -136,8 +170,9 @@ const userSlice = createSlice({
                 state.loading = false;
                 state.otpVerified = true;
                 state.isNewUser = action.payload.isNewUser;
-                if (!action.payload.isNewUser) {
+                if (!action.payload.isNewUser && action.payload.token) {
                     state.userInfo = action.payload; // Logged in
+                    localStorage.setItem('userInfo', JSON.stringify(action.payload));
                 }
             })
             .addCase(verifyOtp.rejected, (state, action) => {
@@ -152,6 +187,7 @@ const userSlice = createSlice({
             .addCase(registerUser.fulfilled, (state, action) => {
                 state.loading = false;
                 state.userInfo = action.payload;
+                localStorage.setItem('userInfo', JSON.stringify(action.payload));
             })
             .addCase(registerUser.rejected, (state, action) => {
                 state.loading = false;
@@ -165,6 +201,7 @@ const userSlice = createSlice({
             .addCase(loginWithPassword.fulfilled, (state, action) => {
                 state.loading = false;
                 state.userInfo = action.payload;
+                localStorage.setItem('userInfo', JSON.stringify(action.payload));
             })
             .addCase(loginWithPassword.rejected, (state, action) => {
                 state.loading = false;
@@ -195,9 +232,36 @@ const userSlice = createSlice({
             .addCase(resetPassword.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
+            })
+            // GOOGLE LOGIN
+            .addCase(googleLogin.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(googleLogin.fulfilled, (state, action) => {
+                state.loading = false;
+                state.userInfo = action.payload;
+                localStorage.setItem('userInfo', JSON.stringify(action.payload));
+            })
+            .addCase(googleLogin.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            // GET PROFILE
+            .addCase(getProfile.pending, (state) => {
+                state.loading = true;
+            })
+            .addCase(getProfile.fulfilled, (state, action) => {
+                state.loading = false;
+                state.userInfo = action.payload;
+                localStorage.setItem('userInfo', JSON.stringify(action.payload));
+            })
+            .addCase(getProfile.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
             });
     }
 });
 
-export const { logout, resetAuthFlow } = userSlice.actions;
+export const { logout, resetAuthFlow, updateUserInfo } = userSlice.actions;
 export default userSlice.reducer;

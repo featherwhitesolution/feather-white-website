@@ -5,6 +5,10 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const nodemailer = require('nodemailer');
+const { OAuth2Client } = require('google-auth-library');
+const { protect, admin } = require('../middleware/authMiddleware');
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 
 // Generate JWT Helper
@@ -43,6 +47,7 @@ router.post('/register', async (req, res) => {
                 name: user.name,
                 email: user.email,
                 isAdmin: user.isAdmin,
+                shippingAddress: user.shippingAddress,
                 token: generateToken(user._id),
             });
         } else {
@@ -139,6 +144,7 @@ router.post('/verify-otp', async (req, res) => {
                     email: user.email,
                     mobile: user.mobile,
                     isAdmin: user.isAdmin,
+                    shippingAddress: user.shippingAddress,
                     token: generateToken(user._id),
                     isNewUser: false
                 });
@@ -208,6 +214,7 @@ router.post('/register', async (req, res) => {
                 email: user.email,
                 mobile: user.mobile,
                 isAdmin: user.isAdmin,
+                shippingAddress: user.shippingAddress,
                 token: generateToken(user._id),
                 isNewUser: true // technically newly created
             });
@@ -315,6 +322,66 @@ router.put('/reset-password/:resetToken', async (req, res) => {
 });
 
 
+// @desc    Google Login / Signup
+// @route   POST /api/users/google-login
+// @access  Public
+router.post('/google-login', async (req, res) => {
+    try {
+        const { idToken } = req.body;
+
+        const ticket = await client.verifyIdToken({
+            idToken,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+
+        const { name, email, sub: googleId, picture } = ticket.getPayload();
+
+        let user = await User.findOne({ email });
+
+        if (user) {
+            // Update user with googleId if not present (Linking accounts)
+            if (!user.googleId) {
+                user.googleId = googleId;
+                await user.save();
+            }
+            
+            res.json({
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                mobile: user.mobile,
+                isAdmin: user.isAdmin,
+                picture: picture,
+                shippingAddress: user.shippingAddress,
+                token: generateToken(user._id),
+                isNewUser: false
+            });
+        } else {
+            // Create New Google User
+            user = await User.create({
+                name,
+                email,
+                googleId,
+                isAdmin: false
+            });
+
+            res.status(201).json({
+                _id: user._id,
+                name: user.name,
+                email: user.email,
+                isAdmin: user.isAdmin,
+                shippingAddress: user.shippingAddress,
+                token: generateToken(user._id),
+                isNewUser: true
+            });
+        }
+    } catch (error) {
+        console.error('Google Auth Error:', error);
+        res.status(401).json({ message: 'Google authentication failed' });
+    }
+});
+
+
 // @desc    Auth user & get token (Legacy/Alternative Password Login)
 // @route   POST /api/users/login
 // @access  Public
@@ -330,6 +397,7 @@ router.post('/login', async (req, res) => {
                 email: user.email,
                 mobile: user.mobile,
                 isAdmin: user.isAdmin,
+                shippingAddress: user.shippingAddress,
                 token: generateToken(user._id),
             });
         } else {
@@ -340,5 +408,112 @@ router.post('/login', async (req, res) => {
     }
 });
 
+
+// @desc    Get user profile
+// @route   GET /api/users/profile
+// @access  Private
+router.get('/profile', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id).select('-password').lean();
+        if (user) {
+            res.json(user);
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// @desc    Update user profile
+// @route   PUT /api/users/profile
+// @access  Private
+router.put('/profile', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+
+        if (user) {
+            user.name = req.body.name || user.name;
+            user.email = req.body.email || user.email;
+            
+            // Allow setting mobile if it's provided, even if it's an empty string (to clear it)
+            if (typeof req.body.mobile !== 'undefined') {
+                user.mobile = req.body.mobile;
+            }
+            
+            if (req.body.shippingAddress) {
+                user.shippingAddress = {
+                    addressLine: req.body.shippingAddress.addressLine || '',
+                    city: req.body.shippingAddress.city || '',
+                    state: req.body.shippingAddress.state || '',
+                    pincode: req.body.shippingAddress.pincode || '',
+                };
+            }
+
+            if (req.body.newPassword) {
+                // Verify current password if user has one
+                if (user.password && req.body.currentPassword) {
+                    const isMatch = await bcrypt.compare(req.body.currentPassword, user.password);
+                    if (!isMatch) {
+                        return res.status(401).json({ message: 'Incorrect current password' });
+                    }
+                } else if (user.password && !req.body.currentPassword) {
+                    return res.status(401).json({ message: 'Please provide your current password to set a new one.' });
+                }
+
+                const salt = await bcrypt.genSalt(10);
+                user.password = await bcrypt.hash(req.body.newPassword, salt);
+            }
+
+            const updatedUser = await user.save();
+            const userResponse = updatedUser.toObject();
+            delete userResponse.password;
+
+            res.json({
+                ...userResponse,
+                token: generateToken(updatedUser._id),
+            });
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// @desc    Get all users
+// @route   GET /api/users
+// @access  Private/Admin
+router.get('/', protect, admin, async (req, res) => {
+    try {
+        const users = await User.find({}).sort('-createdAt').select('-password');
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// @desc    Toggle admin status
+// @route   PUT /api/users/:id/admin
+// @access  Private/Admin
+router.put('/:id/admin', protect, admin, async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (user) {
+            user.isAdmin = !user.isAdmin;
+            const updatedUser = await user.save();
+            res.json({
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                isAdmin: updatedUser.isAdmin
+            });
+        } else {
+            res.status(404).json({ message: 'User not found' });
+        }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 
 module.exports = router;

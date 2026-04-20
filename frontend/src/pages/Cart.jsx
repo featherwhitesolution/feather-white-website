@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Trash2, Plus, Minus, ArrowRight } from 'lucide-react';
 import { removeFromCart, updateQuantity, clearCart } from '../redux/cartSlice';
+import { optimizeCloudinaryUrl } from '../utils/cloudinary';
 
 const Cart = () => {
     const { items, totalAmount, totalQuantity } = useSelector(state => state.cart);
@@ -51,7 +52,7 @@ const Cart = () => {
                             className="bg-navy-800/50 border border-white/10 rounded-xl p-4 flex flex-col sm:flex-row items-center gap-4"
                         >
                             <img
-                                src={item.image}
+                                src={optimizeCloudinaryUrl(item.image, 'w_200,h_200,c_fill,q_auto,f_auto')}
                                 alt={item.name}
                                 className="w-24 h-24 object-cover rounded-lg"
                             />
