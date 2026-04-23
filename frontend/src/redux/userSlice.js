@@ -1,14 +1,11 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
+import api from '../utils/api';
 
-// Helper to get base URL
-// Helper to get base URL
-const API_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api/users` : '/api/users';
 
 // Async Thunks
 export const sendOtp = createAsyncThunk('user/sendOtp', async (mobile, { rejectWithValue }) => {
     try {
-        const response = await axios.post(`${API_URL}/send-otp`, { mobile });
+        const response = await api.post('/api/users/send-otp', { mobile });
         // Return entire response data which includes { success, message, otp (dev), isNewUser }
         return response.data;
     } catch (error) {
@@ -18,7 +15,7 @@ export const sendOtp = createAsyncThunk('user/sendOtp', async (mobile, { rejectW
 
 export const verifyOtp = createAsyncThunk('user/verifyOtp', async ({ mobile, otp }, { rejectWithValue }) => {
     try {
-        const response = await axios.post(`${API_URL}/verify-otp`, { mobile, otp });
+        const response = await api.post('/api/users/verify-otp', { mobile, otp });
         // Returns user info + token if existing user, OR message + isNewUser if new
         if (response.data.token) {
             localStorage.setItem('userInfo', JSON.stringify(response.data));
@@ -31,7 +28,7 @@ export const verifyOtp = createAsyncThunk('user/verifyOtp', async ({ mobile, otp
 
 export const registerUser = createAsyncThunk('user/register', async (userData, { rejectWithValue }) => {
     try {
-        const response = await axios.post(`${API_URL}/register`, userData);
+        const response = await api.post('/api/users/register', userData);
         if (response.data.token) {
             localStorage.setItem('userInfo', JSON.stringify(response.data));
         }
@@ -43,7 +40,7 @@ export const registerUser = createAsyncThunk('user/register', async (userData, {
 
 export const loginWithPassword = createAsyncThunk('user/loginWithPassword', async ({ email, password }, { rejectWithValue }) => {
     try {
-        const response = await axios.post(`${API_URL}/login`, { email, password });
+        const response = await api.post('/api/users/login', { email, password });
         if (response.data.token) {
             localStorage.setItem('userInfo', JSON.stringify(response.data));
         }
@@ -55,7 +52,7 @@ export const loginWithPassword = createAsyncThunk('user/loginWithPassword', asyn
 
 export const forgotPassword = createAsyncThunk('user/forgotPassword', async (emailOrMobile, { rejectWithValue }) => {
     try {
-        const response = await axios.post(`${API_URL}/forgot-password`, { emailOrMobile });
+        const response = await api.post('/api/users/forgot-password', { emailOrMobile });
         return response.data;
     } catch (error) {
         return rejectWithValue(error.response && error.response.data.message ? error.response.data.message : error.message);
@@ -64,7 +61,7 @@ export const forgotPassword = createAsyncThunk('user/forgotPassword', async (ema
 
 export const resetPassword = createAsyncThunk('user/resetPassword', async ({ token, password }, { rejectWithValue }) => {
     try {
-        const response = await axios.put(`${API_URL}/reset-password/${token}`, { password });
+        const response = await api.put(`/api/users/reset-password/${token}`, { password });
         if (response.data.token) {
             localStorage.setItem('userInfo', JSON.stringify(response.data)); // Auto login after reset?
         }
@@ -76,7 +73,7 @@ export const resetPassword = createAsyncThunk('user/resetPassword', async ({ tok
 
 export const googleLogin = createAsyncThunk('user/googleLogin', async (idToken, { rejectWithValue }) => {
     try {
-        const response = await axios.post(`${API_URL}/google-login`, { idToken });
+        const response = await api.post('/api/users/google-login', { idToken });
         if (response.data.token) {
             localStorage.setItem('userInfo', JSON.stringify(response.data));
         }
@@ -89,12 +86,7 @@ export const googleLogin = createAsyncThunk('user/googleLogin', async (idToken, 
 export const getProfile = createAsyncThunk('user/getProfile', async (_, { getState, rejectWithValue }) => {
     try {
         const { user: { userInfo } } = getState();
-        const config = {
-            headers: {
-                Authorization: `Bearer ${userInfo.token}`,
-            },
-        };
-        const response = await axios.get(`${API_URL}/profile`, config);
+        const response = await api.get('/api/users/profile');
         // Merge fresh data with existing token
         const updatedInfo = { ...userInfo, ...response.data };
         localStorage.setItem('userInfo', JSON.stringify(updatedInfo));

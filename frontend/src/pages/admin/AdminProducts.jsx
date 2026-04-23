@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { Pencil, Trash2, Plus, X, Upload } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { optimizeCloudinaryUrl } from '../../utils/cloudinary';
@@ -39,7 +39,7 @@ const AdminProducts = () => {
     const fetchProducts = async () => {
         try {
             setLoading(true);
-            const { data } = await axios.get('/api/products');
+            const { data } = await api.get('/api/products');
             setProducts(data);
             setLoading(false);
         } catch (err) {
@@ -123,15 +123,19 @@ const AdminProducts = () => {
     const uploadImageSlotHandler = async (e, slotIndex) => {
         const file = e.target.files[0];
         if(!file) return;
-        const formDataImage = new FormData();
-        formDataImage.append('image', file);
-        
-        // Track per-slot uploading state
-        setUploadingSlots(prev => ({ ...prev, [slotIndex]: true }));
-
         try {
-            const config = { headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${userInfo.token}` } };
-            const { data } = await axios.post('/api/upload', formDataImage, config);
+            const formDataImage = new FormData();
+            formDataImage.append('image', file);
+            
+            // Track per-slot uploading state
+            setUploadingSlots(prev => ({ ...prev, [slotIndex]: true }));
+            
+            // Note: Content-Type is handled automatically by axios for FormData
+            const { data } = await api.post('/api/upload', formDataImage, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
             const imageUrl = data.url || data;
 
             if (slotIndex === 0) {
@@ -175,9 +179,9 @@ const AdminProducts = () => {
             };
 
             if (editingProduct) {
-                await axios.put(`/api/products/${editingProduct._id}`, finalData, config);
+                await api.put(`/api/products/${editingProduct._id}`, finalData);
             } else {
-                await axios.post('/api/products', finalData, config);
+                await api.post('/api/products', finalData);
             }
             fetchProducts();
             handleCloseModal();
@@ -189,12 +193,7 @@ const AdminProducts = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this product?')) {
             try {
-                const config = {
-                    headers: {
-                        Authorization: `Bearer ${userInfo.token}`,
-                    },
-                };
-                await axios.delete(`/api/products/${id}`, config);
+                await api.delete(`/api/products/${id}`);
                 fetchProducts();
             } catch (err) {
                 alert(err.response?.data?.message || err.message);

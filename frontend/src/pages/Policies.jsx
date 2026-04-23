@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Link, Outlet } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 
 const PolicyLayout = () => (
     <div className="pt-20 pb-20 px-4 min-h-screen">
@@ -25,7 +25,7 @@ const DynamicPolicy = ({ section, defaultTitle, defaultContent }) => {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const response = await axios.get(`/api/home/${section}`);
+                const response = await api.get(`/api/home/${section}`);
                 if (response.data && response.data.data) {
                     setData(response.data.data);
                 }

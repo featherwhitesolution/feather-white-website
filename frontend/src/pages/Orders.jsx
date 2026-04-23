@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../utils/api';
 import { Package, Search, ChevronRight, MapPin, CreditCard, Calendar, Truck, AlertCircle, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { optimizeCloudinaryUrl } from '../utils/cloudinary';
@@ -22,12 +22,7 @@ const Orders = () => {
 
         const fetchOrders = async () => {
             try {
-                const config = {
-                    headers: {
-                        Authorization: `Bearer ${userInfo.token}`,
-                    },
-                };
-                const { data } = await axios.get('/api/orders/myorders', config);
+                const { data } = await api.get('/api/orders/myorders');
                 setOrders(data);
                 setLoading(false);
             } catch (err) {

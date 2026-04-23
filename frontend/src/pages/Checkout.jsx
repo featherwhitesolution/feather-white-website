@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, CheckCircle } from 'lucide-react';
 import { clearCart } from '../redux/cartSlice';
-import axios from 'axios';
+import api from '../utils/api';
 import { optimizeCloudinaryUrl } from '../utils/cloudinary';
 
 const Checkout = () => {
@@ -32,7 +32,7 @@ const Checkout = () => {
     React.useEffect(() => {
         const fetchPaymentSettings = async () => {
             try {
-                const { data } = await axios.get('/api/home/payment');
+                const { data } = await api.get('/api/home/payment');
                 if (data?.data) {
                     setPaymentConfig(data.data);
                     // Set default payment method based on availability
@@ -131,7 +131,7 @@ const Checkout = () => {
                 }
 
                 // 1. Create order on backend (Razorpay Order)
-                const { data: rzpOrder } = await axios.post('/api/orders/razorpay', { amount: finalTotal });
+                const { data: rzpOrder } = await api.post('/api/orders/razorpay', { amount: finalTotal });
 
                 const options = {
                     key: import.meta.env.VITE_RAZORPAY_KEY_ID,
@@ -144,13 +144,13 @@ const Checkout = () => {
                     handler: async function (response) {
                         try {
                             // 2. Once payment done, create the actual order in DB
-                            const { data: createdOrder } = await axios.post('/api/orders', {
+                            const { data: createdOrder } = await api.post('/api/orders', {
                                 ...orderData,
                                 razorpayOrderId: rzpOrder.id
                             });
 
                             // 3. Verify payment on backend
-                            const { data: verification } = await axios.post('/api/orders/razorpay/verify', {
+                            const { data: verification } = await api.post('/api/orders/razorpay/verify', {
                                 razorpay_order_id: response.razorpay_order_id,
                                 razorpay_payment_id: response.razorpay_payment_id,
                                 razorpay_signature: response.razorpay_signature,
@@ -190,7 +190,7 @@ const Checkout = () => {
 
             } else {
                 // Cash on Delivery Logic
-                const { data } = await axios.post('/api/orders', orderData);
+                const { data } = await api.post('/api/orders', orderData);
                 setOrderId(`FW-${data._id.toString().slice(-6).toUpperCase()}`);
                 setOrderDate(new Date().toLocaleDateString('en-IN', {
                     year: 'numeric', month: 'long', day: 'numeric'

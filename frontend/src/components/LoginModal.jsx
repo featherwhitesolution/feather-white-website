@@ -37,14 +37,14 @@ const LoginModal = ({ isOpen, onClose }) => {
 
     useEffect(() => {
         // If OTP is verified and user is NOT new, they are logged in. Close modal.
-        if (otpVerified && !isNewUser && userInfo) {
+        if (isOpen && otpVerified && !isNewUser && userInfo) {
             onClose();
         }
         // If OTP verified and IS new user, switch to register view
-        if (otpVerified && isNewUser) {
+        if (isOpen && otpVerified && isNewUser) {
             setView('register');
         }
-    }, [otpVerified, isNewUser, userInfo, onClose]);
+    }, [otpVerified, isNewUser, userInfo, onClose, isOpen]);
 
     const handleSendOtp = (e) => {
         e.preventDefault();
@@ -93,8 +93,8 @@ const LoginModal = ({ isOpen, onClose }) => {
 
     // Close on userInfo update (successful login)
     useEffect(() => {
-        if (userInfo) onClose();
-    }, [userInfo, onClose]);
+        if (isOpen && userInfo) onClose();
+    }, [userInfo, onClose, isOpen]);
 
 
     if (!isOpen) return null;

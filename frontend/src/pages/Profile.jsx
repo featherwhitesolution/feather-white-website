@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { updateUserInfo, getProfile } from '../redux/userSlice';
-import axios from 'axios';
+import api from '../utils/api';
 import { User, Mail, Phone, MapPin, Save, ShieldCheck, CreditCard, ChevronRight } from 'lucide-react';
 
 const Profile = () => {
@@ -22,7 +22,6 @@ const Profile = () => {
     const [success, setSuccess] = useState(false);
     const [error, setError] = useState(null);
 
-    const API_URL = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api/users` : '/api/users';
 
     useEffect(() => {
         if (!userInfo) {
@@ -51,13 +50,7 @@ const Profile = () => {
         setSuccess(false);
 
         try {
-            const config = {
-                headers: {
-                    Authorization: `Bearer ${userInfo.token}`,
-                },
-            };
-
-            const { data } = await axios.put(`${API_URL}/profile`, {
+            const { data } = await api.put('/api/users/profile', {
                 name,
                 email,
                 mobile,
@@ -67,7 +60,7 @@ const Profile = () => {
                     state,
                     pincode
                 }
-            }, config);
+            });
 
             dispatch(updateUserInfo(data));
             setSuccess(true);

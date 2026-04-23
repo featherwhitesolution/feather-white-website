@@ -14,9 +14,18 @@ export const optimizeCloudinaryUrl = (url, transformations = 'q_auto,f_auto') =>
     // Parse transformations string (e.g., 'w_1080,q_50,f_auto')
     const tParts = transformations.split(',');
     tParts.forEach(part => {
-        if (part.startsWith('w_')) urlObj.searchParams.set('w', part.split('_')[1]);
-        if (part.startsWith('q_')) urlObj.searchParams.set('q', part.split('_')[1]);
+        if (part.startsWith('w_')) {
+            urlObj.searchParams.set('w', part.split('_')[1]);
+        }
+        if (part.startsWith('q_')) {
+            const qVal = part.split('_')[1];
+            // Unsplash needs a number 0-100, not 'auto'
+            urlObj.searchParams.set('q', qVal.includes('auto') ? '80' : qVal);
+        }
     });
+
+    if (!urlObj.searchParams.has('auto')) urlObj.searchParams.set('auto', 'format');
+    if (!urlObj.searchParams.has('fit')) urlObj.searchParams.set('fit', 'crop');
     
     return urlObj.toString();
   }

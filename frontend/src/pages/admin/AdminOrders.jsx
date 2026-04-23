@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { useSelector } from 'react-redux';
 import { Package, Truck, User, CreditCard, ChevronDown, CheckCircle, Clock, ExternalLink, Search, Mail, Phone, MapPin, Eye, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,12 +17,7 @@ const AdminOrders = () => {
     const fetchOrders = async () => {
         try {
             setLoading(true);
-            const config = {
-                headers: {
-                    Authorization: `Bearer ${userInfo.token}`,
-                },
-            };
-            const { data } = await axios.get('/api/orders', config);
+            const { data } = await api.get('/api/orders');
             console.log("Admin API Success: Fetching all orders", data);
             setOrders(data);
             setLoading(false);
@@ -41,12 +36,7 @@ const AdminOrders = () => {
 
     const handleUpdateStatus = async (orderId, updates) => {
         try {
-            const config = {
-                headers: {
-                    Authorization: `Bearer ${userInfo.token}`,
-                },
-            };
-            await axios.put(`/api/orders/${orderId}/status`, updates, config);
+            await api.put(`/api/orders/${orderId}/status`, updates);
             fetchOrders();
             if (selectedOrder && selectedOrder._id === orderId) {
                 // Update selected order view

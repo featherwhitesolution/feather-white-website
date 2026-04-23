@@ -7,7 +7,7 @@ const Product = require('../models/Product');
 // @access  Public
 router.get('/', async (req, res) => {
     try {
-        const { keyword, category, skinType, minPrice, maxPrice, isFeatured } = req.query;
+        const { keyword, category, skinType, minPrice, maxPrice, isFeatured, limit } = req.query;
 
         let query = {};
 
@@ -33,7 +33,13 @@ router.get('/', async (req, res) => {
             if (maxPrice) query.price.$lte = Number(maxPrice);
         }
 
-        const products = await Product.find(query);
+        let productQuery = Product.find(query).lean();
+        
+        if (limit) {
+            productQuery = productQuery.limit(Number(limit));
+        }
+        
+        const products = await productQuery;
         res.json(products);
     } catch (error) {
         res.status(500).json({ message: error.message });

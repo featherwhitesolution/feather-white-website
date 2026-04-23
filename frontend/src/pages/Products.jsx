@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import api from '../utils/api';
 import ProductCard from '../components/ProductCard';
 
 const Products = () => {
-    const [products, setProducts] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [products, setProducts] = useState(() => {
+        const saved = localStorage.getItem('all_products_cache');
+        return saved ? JSON.parse(saved) : [];
+    });
+    const [loading, setLoading] = useState(() => !localStorage.getItem('all_products_cache'));
     const [error, setError] = useState('');
 
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                const { data } = await axios.get('/api/products');
+                const { data } = await api.get('/api/products');
                 setProducts(data);
+                localStorage.setItem('all_products_cache', JSON.stringify(data));
                 setLoading(false);
             } catch (err) {
                 setError('Failed to fetch products');

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { useSelector } from 'react-redux';
 import { User, Shield, Mail, CheckCircle, XCircle, Search, Trash2, Clock, Crown, Key } from 'lucide-react';
 
@@ -12,12 +12,7 @@ const AdminUsers = () => {
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const config = {
-                headers: {
-                    Authorization: `Bearer ${userInfo.token}`,
-                },
-            };
-            const { data } = await axios.get('/api/users', config);
+            const { data } = await api.get('/api/users');
             setUsers(data);
             setLoading(false);
         } catch (error) {
@@ -39,12 +34,7 @@ const AdminUsers = () => {
         }
 
         try {
-            const config = {
-                headers: {
-                    Authorization: `Bearer ${userInfo.token}`,
-                },
-            };
-            await axios.put(`/api/users/${userId}/admin`, {}, config);
+            await api.put(`/api/users/${userId}/admin`, {});
             fetchUsers(); // Refresh list
         } catch (error) {
             alert('Update failed: ' + (error.response?.data?.message || 'Error'));

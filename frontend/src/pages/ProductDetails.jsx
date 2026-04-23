@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Star, ShoppingCart, Minus, Plus, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useDispatch } from 'react-redux';
 import { addToCart } from '../redux/cartSlice';
-import axios from 'axios';
+import api from '../utils/api';
 import { optimizeCloudinaryUrl } from '../utils/cloudinary';
 
 const ProductDetails = () => {
@@ -21,7 +21,7 @@ const ProductDetails = () => {
     useEffect(() => {
         const fetchProduct = async () => {
             try {
-                const { data } = await axios.get(`/api/products/${id}`);
+                const { data } = await api.get(`/api/products/${id}`);
                 setProduct(data);
                 setLoading(false);
             } catch (err) {

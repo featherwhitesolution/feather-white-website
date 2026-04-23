@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { Plus, Trash2, Save, Image, Type, Info, Share2, AlertCircle, CheckCircle2, RefreshCw, LayoutList, FileText, Upload, Loader2 } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { optimizeCloudinaryUrl } from '../../utils/cloudinary';
@@ -27,7 +27,7 @@ const AdminHomeContent = () => {
         setError(null);
         try {
             console.log("Admin CMS: Checking server connection...");
-            const { data } = await axios.get('/api/home');
+            const { data } = await api.get('/api/home');
             const newContent = { ...content };
             data.forEach(seg => { 
                 if (seg.section && seg.data) {
@@ -53,7 +53,7 @@ const AdminHomeContent = () => {
         try {
             setError(null);
             setSuccess(false);
-            const response = await axios.post('/api/home', { 
+            const response = await api.post('/api/home', { 
                 section, 
                 data: content[section] 
             });
@@ -70,21 +70,21 @@ const AdminHomeContent = () => {
 
     const uploadSliderImageHandler = async (e, index) => {
         const file = e.target.files[0];
-        if (!file) return;
+        if (!file) {
+            alert('No file detected by browser');
+            return;
+        }
 
         const formDataImage = new FormData();
         formDataImage.append('image', file);
         setUploading({ index, status: true });
 
         try {
-            const config = {
+            const { data } = await api.post('/api/upload', formDataImage, {
                 headers: {
-                    'Content-Type': 'multipart/form-data',
-                    Authorization: `Bearer ${userInfo.token}`,
-                },
-            };
-
-            const { data } = await axios.post('/api/upload', formDataImage, config);
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
             
             const safeUrl = (typeof data === 'object' && data !== null && data.url) ? data.url : data;
             const newSlides = [...content.hero.slides];
@@ -93,7 +93,8 @@ const AdminHomeContent = () => {
             setUploading({ index: null, status: false });
         } catch (error) {
             console.error(error);
-            alert('File upload failed');
+            const errMsg = error.response?.data?.message || error.message;
+            alert(`File upload failed: ${errMsg}`);
             setUploading({ index: null, status: false });
         }
     };
@@ -178,7 +179,7 @@ const AdminHomeContent = () => {
                                 </button>
                                 <button 
                                     onClick={() => handleSave('hero')} 
-                                    className="px-8 py-3 bg-gold-600 text-white font-black rounded-xl hover:bg-gold-500 shadow-xl shadow-gold-600/30 border border-gold-400 flex items-center gap-2 transition-all active:scale-95"
+                                    className="px-8 py-3 bg-gold-600 text-white font-black rounded-xl hover:bg-gold-500 active:bg-gold-700 shadow-lg shadow-gold-600/30 hover:shadow-gold-500/50 border border-gold-400 active:border-gold-600 flex items-center gap-2 transition-all duration-300 hover:-translate-y-1 active:scale-95 active:translate-y-0"
                                 >
                                     <Save size={20} />
                                     SAVE ALL CHANGES
@@ -187,14 +188,19 @@ const AdminHomeContent = () => {
                         </div>
                         <div className="space-y-4">
                             {content.hero.slides.map((s, i) => (
-                                <div key={i} className="bg-navy-800/50 p-6 rounded-2xl border border-white/5 flex flex-col gap-4">
+                                <div key={s._id || s.id || `slide-index-${i}`} className="bg-navy-800/50 p-6 rounded-2xl border border-white/5 flex flex-col gap-4">
                                     <div className="flex justify-between items-center bg-white/5 -mx-6 -mt-6 p-4 rounded-t-2xl border-b border-white/5 mb-2">
                                         <span className="text-gold-500 font-bold text-sm">Slide #{i + 1}</span>
                                         <button 
-                                            onClick={() => setContent({...content, hero: { slides: content.hero.slides.filter((_, idx) => idx !== i) }})}
-                                            className="text-red-500 hover:text-red-400 p-2 hover:bg-red-500/10 rounded-lg transition-all"
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                setContent({...content, hero: { slides: content.hero.slides.filter((_, idx) => idx !== i) }});
+                                            }}
+                                            className="text-red-500 hover:text-white hover:bg-red-500 p-3 rounded-lg transition-all shadow-sm border border-red-500/20 active:scale-95 flex items-center gap-2"
                                         >
                                             <Trash2 size={18} />
+                                            <span className="text-xs font-bold uppercase">Remove Slide</span>
                                         </button>
                                     </div>
 
@@ -216,6 +222,7 @@ const AdminHomeContent = () => {
                                                             type="file"
                                                             className="hidden"
                                                             id={`slider-upload-${i}`}
+                                                            onClick={(e) => e.target.value = null}
                                                             onChange={(e) => uploadSliderImageHandler(e, i)}
                                                             accept="image/*"
                                                         />

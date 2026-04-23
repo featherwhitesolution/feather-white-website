@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import api from '../../utils/api';
 import { useSelector, useDispatch } from 'react-redux';
 import { Settings, Lock, Mail, User, Store, Percent, Truck, Bell, ShieldCheck, Save, Clock, HelpCircle, AlertCircle, CreditCard } from 'lucide-react';
 import { updateUserInfo } from '../../redux/userSlice';
@@ -44,7 +44,7 @@ const AdminSettings = () => {
     React.useEffect(() => {
         const fetchSettings = async () => {
             try {
-                const storeRes = await axios.get('/api/home/store');
+                const storeRes = await api.get('/api/home/store');
                 if (storeRes.data?.data) {
                     setStoreConfig(storeRes.data.data);
                 }
@@ -52,7 +52,7 @@ const AdminSettings = () => {
                 console.log('Store settings not found, using defaults.');
             }
             try {
-                const notifRes = await axios.get('/api/home/notification');
+                const notifRes = await api.get('/api/home/notification');
                 if (notifRes.data?.data) {
                     setNotificationConfig(notifRes.data.data);
                 }
@@ -60,7 +60,7 @@ const AdminSettings = () => {
                 console.log('Notification settings not found, using defaults.');
             }
             try {
-                const payRes = await axios.get('/api/home/payment');
+                const payRes = await api.get('/api/home/payment');
                 if (payRes.data?.data) {
                     setPaymentConfig(payRes.data.data);
                 }
@@ -79,15 +79,8 @@ const AdminSettings = () => {
         }
 
         try {
-            setLoading(true);
-            const config = {
-                headers: {
-                    Authorization: `Bearer ${userInfo.token}`,
-                },
-            };
-            
             // This route now exists in userRoutes.js
-            const { data } = await axios.put('/api/users/profile', accountData, config);
+            const { data } = await api.put('/api/users/profile', accountData);
             
             dispatch(updateUserInfo(data));
             setStatus({ type: 'success', message: 'Account updated successfully!' });
@@ -103,8 +96,7 @@ const AdminSettings = () => {
         e.preventDefault();
         try {
             setLoading(true);
-            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-            await axios.post('/api/home', { section: 'store', data: storeConfig }, config);
+            await api.post('/api/home', { section: 'store', data: storeConfig });
             setStatus({ type: 'success', message: 'Store configuration updated!' });
         } catch (error) {
             setStatus({ type: 'error', message: error.response?.data?.message || 'Store update failed' });
@@ -117,8 +109,7 @@ const AdminSettings = () => {
         e.preventDefault();
         try {
             setLoading(true);
-            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-            await axios.post('/api/home', { section: 'notification', data: notificationConfig }, config);
+            await api.post('/api/home', { section: 'notification', data: notificationConfig });
             setStatus({ type: 'success', message: 'Notification preferences updated!' });
         } catch (error) {
             setStatus({ type: 'error', message: error.response?.data?.message || 'Notification update failed' });
@@ -131,8 +122,7 @@ const AdminSettings = () => {
         e.preventDefault();
         try {
             setLoading(true);
-            const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-            await axios.post('/api/home', { section: 'payment', data: paymentConfig }, config);
+            await api.post('/api/home', { section: 'payment', data: paymentConfig });
             setStatus({ type: 'success', message: 'Payment gateway settings updated!' });
         } catch (error) {
             setStatus({ type: 'error', message: error.response?.data?.message || 'Payment update failed' });

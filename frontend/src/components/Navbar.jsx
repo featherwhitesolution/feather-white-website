@@ -16,6 +16,14 @@ const Navbar = () => {
     const { userInfo } = useSelector(state => state.user);
     const dispatch = useDispatch();
 
+    const setIsLoginModalOpenCallback = React.useCallback((val) => {
+        setIsLoginModalOpen(val);
+    }, []);
+
+    const closeLoginModal = React.useCallback(() => {
+        setIsLoginModalOpen(false);
+    }, []);
+
     // Close user menu when clicking outside
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -30,15 +38,15 @@ const Navbar = () => {
         };
     }, []);
 
-    const handleLogout = () => {
+    const handleLogout = React.useCallback(() => {
         dispatch(logout());
         setShowUserMenu(false);
-    };
+    }, [dispatch]);
 
-    const navLinks = [
+    const navLinks = React.useMemo(() => [
         { name: 'Home', path: '/' },
         { name: 'Products', path: '/products' },
-    ];
+    ], []);
 
     return (
         <>
@@ -107,7 +115,7 @@ const Navbar = () => {
                                     </button>
                                 ) : (
                                     <button
-                                        onClick={() => setIsLoginModalOpen(true)}
+                                        onClick={() => setIsLoginModalOpenCallback(true)}
                                         className="btn-premium py-2 px-6 text-[10px]"
                                     >
                                         Login
@@ -186,7 +194,7 @@ const Navbar = () => {
                                 ))}
                                 {!userInfo && (
                                     <button
-                                        onClick={() => { setIsOpen(false); setIsLoginModalOpen(true); }}
+                                        onClick={() => { setIsOpen(false); setIsLoginModalOpenCallback(true); }}
                                         className="btn-premium w-full mt-10"
                                     >
                                         Access Account
@@ -198,7 +206,7 @@ const Navbar = () => {
                 </AnimatePresence>
             </nav>
 
-            <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
+            <LoginModal isOpen={isLoginModalOpen} onClose={closeLoginModal} />
         </>
     );
 };
