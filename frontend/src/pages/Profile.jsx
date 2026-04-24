@@ -104,19 +104,54 @@ const Profile = () => {
                         <div className="space-y-3">
                             <div className="bg-white/5 rounded-2xl p-4 flex items-center justify-between group-hover:bg-white/10 transition-all border border-transparent hover:border-gold-500/20">
                                 <div className="flex items-center space-x-3">
-                                    <div className="w-10 h-10 bg-gold-500/10 rounded-xl flex items-center justify-center text-gold-500">
+                                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${userInfo.isVerified ? 'bg-gold-500/10 text-gold-500' : 'bg-red-500/10 text-red-500'}`}>
                                         <ShieldCheck size={20} />
                                     </div>
                                     <span className="text-sm text-gray-300">Status</span>
                                 </div>
-                                <span className="text-xs font-bold text-gold-400 uppercase tracking-tighter">Verified</span>
+                                <span className={`text-xs font-bold uppercase tracking-tighter ${userInfo.isVerified ? 'text-gold-400' : 'text-red-400'}`}>
+                                    {userInfo.isVerified ? 'Verified' : 'Unverified'}
+                                </span>
                             </div>
                         </div>
+
+                        {!userInfo.isVerified && (
+                            <button 
+                                onClick={async () => {
+                                    try {
+                                        await api.post('/api/users/resend-verification');
+                                        alert('Verification email resent! Please check your inbox.');
+                                    } catch (err) {
+                                        alert(err.response?.data?.message || 'Failed to resend email');
+                                    }
+                                }}
+                                className="mt-6 w-full py-3 px-4 bg-red-500/10 border border-red-500/20 rounded-xl text-xs font-bold text-red-400 hover:bg-red-500/20 transition-all uppercase tracking-widest"
+                            >
+                                Resend Verification
+                            </button>
+                        )}
                     </div>
                 </div>
 
                 {/* MIDDLE: Form (Col 6) */}
                 <div className="lg:col-span-6">
+                    {!userInfo.isVerified && (
+                        <motion.div 
+                            initial={{ opacity: 0, y: -20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mb-8 bg-gradient-to-r from-red-900/40 to-navy-800 border border-red-500/30 rounded-3xl p-6 flex items-center justify-between shadow-xl"
+                        >
+                            <div className="flex items-center space-x-4">
+                                <div className="p-3 bg-red-500/20 rounded-2xl text-red-400">
+                                    <Mail className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h4 className="text-sm font-bold text-white uppercase tracking-wider">Email Not Verified</h4>
+                                    <p className="text-[11px] text-gray-400 mt-1">Please confirm your email to secure your account and unlock all features.</p>
+                                </div>
+                            </div>
+                        </motion.div>
+                    )}
                     <form onSubmit={handleSubmit} className="bg-navy-800 border border-white/10 rounded-3xl overflow-hidden shadow-2xl h-full">
                         <div className="p-8 border-b border-white/10 bg-white/5 flex items-center justify-between">
                             <h3 className="text-xl font-bold text-white">Update Information</h3>

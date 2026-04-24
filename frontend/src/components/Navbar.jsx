@@ -173,35 +173,98 @@ const Navbar = () => {
                 {/* Mobile Menu */}
                 <AnimatePresence>
                     {isOpen && (
-                        <motion.div
-                            initial={{ opacity: 0, x: 100 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 100 }}
-                            className="fixed inset-0 top-20 bg-navy-950/95 backdrop-blur-2xl z-50 md:hidden"
-                        >
-                            <div className="flex flex-col p-8 space-y-6">
-                                {navLinks.map((link) => (
-                                    <NavLink
-                                        key={link.path}
-                                        to={link.path}
-                                        className={({ isActive }) =>
-                                            `text-2xl font-serif tracking-widest ${isActive ? 'text-gold-500' : 'text-cream-100'}`
-                                        }
+                        <>
+                            {/* Backdrop Overlay */}
+                            <motion.div 
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                onClick={() => setIsOpen(false)}
+                                className="fixed inset-0 bg-black/60 backdrop-blur-md z-[45] md:hidden"
+                            />
+                            
+                            <motion.div
+                                initial={{ opacity: 0, x: '100%' }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: '100%' }}
+                                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                                className="fixed inset-y-0 right-0 w-[80%] max-w-sm bg-navy-950 border-l border-white/10 z-[50] md:hidden shadow-2xl flex flex-col"
+                            >
+                                <div className="flex items-center justify-between p-6 border-b border-white/5">
+                                    <div className="flex items-center">
+                                        <div className="bg-white p-1.5 rounded-lg shadow-xl">
+                                            <img src="/assets/logo.png" alt="Logo" className="h-6 w-auto" />
+                                        </div>
+                                        <span className="ml-3 text-sm font-serif text-cream-100 uppercase tracking-widest">Feather White</span>
+                                    </div>
+                                    <button 
                                         onClick={() => setIsOpen(false)}
+                                        className="p-2 rounded-full bg-white/5 text-cream-100 hover:text-gold-500 transition-colors"
                                     >
-                                        {link.name}
-                                    </NavLink>
-                                ))}
-                                {!userInfo && (
-                                    <button
-                                        onClick={() => { setIsOpen(false); setIsLoginModalOpenCallback(true); }}
-                                        className="btn-premium w-full mt-10"
-                                    >
-                                        Access Account
+                                        <X className="w-6 h-6" />
                                     </button>
-                                )}
-                            </div>
-                        </motion.div>
+                                </div>
+
+                                <div className="flex-1 overflow-y-auto p-8 flex flex-col space-y-8">
+                                    <div className="flex flex-col space-y-6">
+                                        <p className="text-[10px] uppercase tracking-[0.3em] text-gold-500/50 font-black">Explore</p>
+                                        {navLinks.map((link) => (
+                                            <NavLink
+                                                key={link.path}
+                                                to={link.path}
+                                                className={({ isActive }) =>
+                                                    `text-3xl font-serif tracking-widest transition-all duration-300 ${isActive ? 'text-gold-500 translate-x-2' : 'text-cream-100 hover:translate-x-2'}`
+                                                }
+                                                onClick={() => setIsOpen(false)}
+                                            >
+                                                {link.name}
+                                            </NavLink>
+                                        ))}
+                                    </div>
+
+                                    <div className="pt-8 border-t border-white/5 flex flex-col space-y-6">
+                                        <p className="text-[10px] uppercase tracking-[0.3em] text-gold-500/50 font-black">Account</p>
+                                        {userInfo ? (
+                                            <div className="space-y-4">
+                                                <Link 
+                                                    to="/profile" 
+                                                    onClick={() => setIsOpen(false)}
+                                                    className="flex items-center text-xl text-cream-100/80 hover:text-white"
+                                                >
+                                                    <User className="mr-4 w-5 h-5 text-gold-500" /> My Profile
+                                                </Link>
+                                                <Link 
+                                                    to="/orders" 
+                                                    onClick={() => setIsOpen(false)}
+                                                    className="flex items-center text-xl text-cream-100/80 hover:text-white"
+                                                >
+                                                    <ShoppingCart className="mr-4 w-5 h-5 text-gold-500" /> My Orders
+                                                </Link>
+                                                <button
+                                                    onClick={() => { handleLogout(); setIsOpen(false); }}
+                                                    className="flex items-center text-xl text-red-400"
+                                                >
+                                                    <LogOut className="mr-4 w-5 h-5" /> Sign Out
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => { setIsOpen(false); setIsLoginModalOpenCallback(true); }}
+                                                className="btn-premium w-full text-center"
+                                            >
+                                                Access Account
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div className="p-8 border-t border-white/5 bg-white/5">
+                                    <p className="text-[8px] text-cream-100/30 uppercase tracking-[0.2em] text-center">
+                                        © 2026 Feather White Artisanal Skincare
+                                    </p>
+                                </div>
+                            </motion.div>
+                        </>
                     )}
                 </AnimatePresence>
             </nav>

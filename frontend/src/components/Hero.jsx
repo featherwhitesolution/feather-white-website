@@ -70,7 +70,7 @@ const Hero = () => {
     if (slides.length === 0) return null; // Failsafe if no slides are ever returned
 
     return (
-        <section className="relative w-full aspect-[1920/830] min-h-[300px] overflow-hidden bg-navy-950 border-b border-white/5">
+        <section className="relative w-full aspect-[9/16] md:aspect-[1920/830] max-h-[85vh] md:max-h-none min-h-[500px] md:min-h-[300px] overflow-hidden bg-navy-950 border-b border-white/5">
             
             {/* BACKGROUND IMAGES (Sliding Carousel) */}
             <AnimatePresence initial={false}>
@@ -104,12 +104,8 @@ const Hero = () => {
 
 
 
-            
-
         </section>
     );
 };
 
 export default Hero;
-
-

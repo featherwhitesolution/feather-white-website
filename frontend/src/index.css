@@ -18,16 +18,20 @@
     --gold-gradient: linear-gradient(135deg, #eab308 0%, #ca8a04 100%);
   }
 
-  html {
+  html, body {
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    width: 100%;
+    position: relative;
   }
 
   body {
     @apply bg-navy-950 text-cream-100 font-sans selection:bg-gold-500/30;
     margin: 0;
     padding: 0;
+    min-height: 100vh;
   }
 
   h1, h2, h3, h4, h5, h6 {

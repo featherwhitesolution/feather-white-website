@@ -13,14 +13,21 @@ const SocialConnect = ({ socialData, getLink }) => {
   };
   
   const safeGetLink = getLink || ((url) => url || '#');
+
+  const handleLinkClick = (e, url) => {
+    if (!url || url === '#' || url === '') {
+      e.preventDefault();
+      alert('Social link coming soon!');
+    }
+  };
   
   return (
-    <div className="py-20 bg-gradient-to-br from-gray-900 to-black flex flex-col items-center justify-center p-4 font-sans w-full">
-      <div className="w-full max-w-3xl mx-auto text-center mb-16">
-        <h1 className="text-6xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 mb-6 ">
+    <div className="py-12 md:py-20 bg-gradient-to-br from-gray-900 to-black flex flex-col items-center justify-center p-4 font-sans w-full overflow-hidden">
+      <div className="w-full max-w-3xl mx-auto text-center mb-8 md:mb-16">
+        <h1 className="text-4xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-red-400 mb-4 md:mb-6 leading-tight">
           Connect <span className="text-white">With Us</span>
         </h1>
-        <p className="text-xl text-gray-300 max-w-2xl mx-auto">
+        <p className="text-base md:text-xl text-gray-300 max-w-2xl mx-auto px-4">
           Join our community and stay updated with the latest news, releases, and exclusive content
         </p>
       </div>
@@ -28,38 +35,62 @@ const SocialConnect = ({ socialData, getLink }) => {
       <div className="relative w-full max-w-2xl">
         {/* 3D Glowing Container */}
         <div 
-          className={`rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 shadow-2xl backdrop-blur-3xl overflow-hidden p-8 transition-all duration-500 hover:scale-105`}
+          className={`rounded-[2rem] md:rounded-3xl bg-gradient-to-br from-gray-800/80 to-gray-900/90 border border-gray-700/50 shadow-2xl backdrop-blur-3xl overflow-hidden p-6 md:p-8 transition-all duration-500 hover:scale-[1.02] md:hover:scale-105`}
           style={{
-            boxShadow:  '0 0 50px rgba(139, 92, 246, 0.6), 0 0 80px rgba(124, 58, 237, 0.4)'
+            boxShadow: '0 0 50px rgba(139, 92, 246, 0.3), 0 0 80px rgba(124, 58, 237, 0.2)'
           }}
         >
-          <div className="flex flex-wrap justify-center gap-8">
-            <a href={safeGetLink(safeData.instagram)} target="_blank" rel="noopener noreferrer" className="social-icon instagram">
+          <div className="flex flex-wrap justify-center gap-4 md:gap-8">
+            <a 
+              href={safeGetLink(safeData.instagram)} 
+              onClick={(e) => handleLinkClick(e, safeData.instagram)}
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="social-icon instagram"
+            >
               <div className="icon-container">
-                <Instagram className="w-8 h-8 text-white" />
+                <Instagram className="w-6 h-6 md:w-8 md:h-8 text-white" />
               </div>
-              <span className="icon-label">Instagram</span>
+              <span className="icon-label text-xs md:text-sm">Instagram</span>
             </a>
             
-            <a href={safeGetLink(safeData.youtube)} target="_blank" rel="noopener noreferrer" className="social-icon youtube">
+            <a 
+              href={safeGetLink(safeData.youtube)} 
+              onClick={(e) => handleLinkClick(e, safeData.youtube)}
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="social-icon youtube"
+            >
               <div className="icon-container">
-                 <Youtube className="w-8 h-8 text-white" />
+                 <Youtube className="w-6 h-6 md:w-8 md:h-8 text-white" />
               </div>
-              <span className="icon-label">YouTube</span>
+              <span className="icon-label text-xs md:text-sm">YouTube</span>
             </a>
             
-            <a href={safeGetLink(safeData.facebook)} target="_blank" rel="noopener noreferrer" className="social-icon facebook">
+            <a 
+              href={safeGetLink(safeData.facebook)} 
+              onClick={(e) => handleLinkClick(e, safeData.facebook)}
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="social-icon facebook"
+            >
               <div className="icon-container">
-                <Facebook className="w-8 h-8 text-white fill-transparent" />
+                <Facebook className="w-6 h-6 md:w-8 md:h-8 text-white fill-transparent" />
               </div>
-              <span className="icon-label">Facebook</span>
+              <span className="icon-label text-xs md:text-sm">Facebook</span>
             </a>
             
-            <a href={safeData.whatsapp ? `https://wa.me/${safeData.whatsapp}` : '#'} target="_blank" rel="noopener noreferrer" className="social-icon whatsapp">
+            <a 
+              href={safeData.whatsapp ? `https://wa.me/${safeData.whatsapp}` : '#'} 
+              onClick={(e) => handleLinkClick(e, safeData.whatsapp)}
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="social-icon whatsapp"
+            >
               <div className="icon-container">
-                 <MessageCircle className="w-8 h-8 text-white" />
+                 <MessageCircle className="w-6 h-6 md:w-8 md:h-8 text-white" />
               </div>
-              <span className="icon-label">WhatsApp</span>
+              <span className="icon-label text-xs md:text-sm">WhatsApp</span>
             </a>
           </div>
         </div>
@@ -78,8 +109,8 @@ const SocialConnect = ({ socialData, getLink }) => {
         
         .icon-container {
           display: inline-flex;
-          width: 80px;
-          height: 80px;
+          width: 60px;
+          height: 60px;
           border-radius: 50%;
           transition: all 0.3s ease;
           position: relative;
@@ -91,22 +122,47 @@ const SocialConnect = ({ socialData, getLink }) => {
           -webkit-backdrop-filter: blur(4px);
           border: 1px solid rgba(255, 255, 255, 0.1);
         }
+
+        @media (min-width: 768px) {
+          .icon-container {
+            width: 80px;
+            height: 80px;
+          }
+        }
         
         .social-icon:hover .icon-container {
-          transform: translateY(-10px) scale(1.1);
+          transform: translateY(-5px) scale(1.05);
+        }
+        
+        @media (min-width: 768px) {
+          .social-icon:hover .icon-container {
+            transform: translateY(-10px) scale(1.1);
+          }
         }
         
         .social-icon:hover .icon-label {
           opacity: 1;
-          transform: translateY(5px);
+          transform: translateY(2px);
+        }
+
+        @media (min-width: 768px) {
+          .social-icon:hover .icon-label {
+            transform: translateY(5px);
+          }
         }
         
         .icon-label {
-          margin-top: 12px;
+          margin-top: 8px;
           color: white;
           font-weight: 500;
           opacity: 0.7;
           transition: all 0.3s ease;
+        }
+
+        @media (min-width: 768px) {
+          .icon-label {
+            margin-top: 12px;
+          }
         }
         
         .social-icon.instagram:hover .icon-container {

@@ -118,24 +118,24 @@ const About = () => {
                         </div>
 
                         {/* Feature Icons */}
-                        <div className="grid grid-cols-3 gap-4 pt-6 max-w-2xl mx-auto">
-                            <div className="flex flex-col items-center text-center space-y-2 group">
-                                <div className="p-3 bg-navy-700 rounded-full text-gold-500 group-hover:bg-gold-500 group-hover:text-navy-900 transition-colors duration-300">
-                                    <Leaf size={24} />
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 pt-6 max-w-2xl mx-auto">
+                            <div className="flex flex-col items-center text-center space-y-3 group">
+                                <div className="p-4 bg-navy-700 rounded-2xl text-gold-500 group-hover:bg-gold-500 group-hover:text-navy-900 transition-all duration-300 shadow-xl">
+                                    <Leaf size={32} />
                                 </div>
-                                <span className="text-sm font-medium">100% Organic</span>
+                                <span className="text-sm font-bold uppercase tracking-widest text-gold-500/80">100% Organic</span>
                             </div>
-                            <div className="flex flex-col items-center text-center space-y-2 group">
-                                <div className="p-3 bg-navy-700 rounded-full text-gold-500 group-hover:bg-gold-500 group-hover:text-navy-900 transition-colors duration-300">
-                                    <Droplets size={24} />
+                            <div className="flex flex-col items-center text-center space-y-3 group">
+                                <div className="p-4 bg-navy-700 rounded-2xl text-gold-500 group-hover:bg-gold-500 group-hover:text-navy-900 transition-all duration-300 shadow-xl">
+                                    <Droplets size={32} />
                                 </div>
-                                <span className="text-sm font-medium">Pure Extracts</span>
+                                <span className="text-sm font-bold uppercase tracking-widest text-gold-500/80">Pure Extracts</span>
                             </div>
-                            <div className="flex flex-col items-center text-center space-y-2 group">
-                                <div className="p-3 bg-navy-700 rounded-full text-gold-500 group-hover:bg-gold-500 group-hover:text-navy-900 transition-colors duration-300">
-                                    <Sparkles size={24} />
+                            <div className="flex flex-col items-center text-center space-y-3 group">
+                                <div className="p-4 bg-navy-700 rounded-2xl text-gold-500 group-hover:bg-gold-500 group-hover:text-navy-900 transition-all duration-300 shadow-xl">
+                                    <Sparkles size={32} />
                                 </div>
-                                <span className="text-sm font-medium">Radiant Glow</span>
+                                <span className="text-sm font-bold uppercase tracking-widest text-gold-500/80">Radiant Glow</span>
                             </div>
                         </div>
                     </motion.div>

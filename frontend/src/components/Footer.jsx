@@ -29,9 +29,17 @@ const Footer = () => {
     }, []);
 
     const getLink = (url) => {
-        if (!url || url === '#' || url === '') return '#';
+        if (!url || url === '#' || url === '') return null;
         if (url.startsWith('http')) return url;
         return `https://${url}`;
+    };
+
+    const handleSocialClick = (e, platform) => {
+        const url = getLink(social[platform]);
+        if (!url) {
+            e.preventDefault();
+            alert(`${platform.charAt(0).toUpperCase() + platform.slice(1)} link coming soon!`);
+        }
     };
 
     return (
@@ -119,7 +127,8 @@ const Footer = () => {
                                     return (
                                         <a 
                                             key={platform}
-                                            href={getLink(social[platform])} 
+                                            href={getLink(social[platform]) || '#'} 
+                                            onClick={(e) => handleSocialClick(e, platform)}
                                             target="_blank" 
                                             rel="noopener noreferrer" 
                                             className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-cream-100/40 hover:text-gold-400 hover:border-gold-500/50 hover:-translate-y-1 transition-all duration-300"

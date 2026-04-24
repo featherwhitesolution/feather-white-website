@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const nodemailer = require('nodemailer');
 const { OAuth2Client } = require('google-auth-library');
 const { protect, admin } = require('../middleware/authMiddleware');
+const sendEmail = require('../utils/sendEmail');
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -208,6 +209,37 @@ router.post('/register', async (req, res) => {
         });
 
         if (user) {
+            // Generate Verification Token
+            const verificationToken = crypto.randomBytes(32).toString('hex');
+            user.verificationToken = verificationToken;
+            await user.save();
+
+            // Send Verification Email
+            const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email/${verificationToken}`;
+            
+            const message = `Welcome to Feather White! Please verify your email by clicking the link below:\n\n${verificationUrl}`;
+            const html = `
+                <div style="font-family: serif; color: #0a0c1a; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eab308; border-radius: 10px;">
+                    <h1 style="color: #eab308; text-align: center;">Welcome to Feather White</h1>
+                    <p style="font-size: 16px; line-height: 1.6;">Thank you for joining our community of luxury and nature. Please confirm your email address to get full access to our artisanal collection.</p>
+                    <div style="text-align: center; margin: 30px 0;">
+                        <a href="${verificationUrl}" style="background-color: #eab308; color: #0a0c1a; padding: 12px 30px; text-decoration: none; font-weight: bold; border-radius: 5px; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">Verify Email Address</a>
+                    </div>
+                    <p style="font-size: 12px; color: #666;">If you didn't create an account, you can safely ignore this email.</p>
+                </div>
+            `;
+
+            try {
+                await sendEmail({
+                    email: user.email,
+                    subject: 'Verify your Feather White account',
+                    message,
+                    html
+                });
+            } catch (err) {
+                console.error('Email sending failed:', err);
+            }
+
             res.status(201).json({
                 _id: user._id,
                 name: user.name,
@@ -216,7 +248,7 @@ router.post('/register', async (req, res) => {
                 isAdmin: user.isAdmin,
                 shippingAddress: user.shippingAddress,
                 token: generateToken(user._id),
-                isNewUser: true // technically newly created
+                isNewUser: true
             });
         } else {
             res.status(400).json({ message: 'Invalid user data' });
@@ -225,6 +257,75 @@ router.post('/register', async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 });
+
+// @desc    Verify Email
+// @route   GET /api/users/verify-email/:token
+// @access  Public
+router.get('/verify-email/:token', async (req, res) => {
+    try {
+        const user = await User.findOne({ verificationToken: req.params.token });
+
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired verification token' });
+        }
+
+        user.isVerified = true;
+        user.verificationToken = undefined;
+        await user.save();
+
+        res.json({ message: 'Email verified successfully! You can now log in.' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// @desc    Resend Verification Email
+// @route   POST /api/users/resend-verification
+// @access  Private
+router.post('/resend-verification', protect, async (req, res) => {
+    try {
+        const user = await User.findById(req.user._id);
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({ message: 'User is already verified' });
+        }
+
+        // Generate Verification Token
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        user.verificationToken = verificationToken;
+        await user.save();
+
+        // Send Verification Email
+        const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email/${verificationToken}`;
+        
+        const message = `Please verify your email by clicking the link below:\n\n${verificationUrl}`;
+        const html = `
+            <div style="font-family: serif; color: #0a0c1a; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eab308; border-radius: 10px;">
+                <h1 style="color: #eab308; text-align: center;">Verify Your Account</h1>
+                <p style="font-size: 16px; line-height: 1.6;">You requested a new verification link. Please confirm your email address below.</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${verificationUrl}" style="background-color: #eab308; color: #0a0c1a; padding: 12px 30px; text-decoration: none; font-weight: bold; border-radius: 5px; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">Verify Email Address</a>
+                </div>
+            </div>
+        `;
+
+        await sendEmail({
+            email: user.email,
+            subject: 'New Verification Link - Feather White',
+            message,
+            html
+        });
+
+        res.json({ message: 'Verification email sent' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 
 // @desc    Forgot Password - Send Reset Link
 // @route   POST /api/users/forgot-password
@@ -262,11 +363,27 @@ router.post('/forgot-password', async (req, res) => {
 
         const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
 
-        // MOCK EMAIL SENDING
+        // MOCK EMAIL SENDING REMOVED - Using Actual sendEmail
         console.log(`\n\n------------\nPASSWORD RESET LINK for ${user.email}: ${resetUrl}\n------------\n\n`);
 
+        const html = `
+            <div style="font-family: serif; color: #0a0c1a; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eab308; border-radius: 10px;">
+                <h2 style="color: #eab308; text-align: center;">Password Reset Request</h2>
+                <p style="font-size: 16px; line-height: 1.6;">You requested a password reset. Click the button below to set a new password. This link is valid for 10 minutes.</p>
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${resetUrl}" style="background-color: #eab308; color: #0a0c1a; padding: 12px 30px; text-decoration: none; font-weight: bold; border-radius: 5px; font-size: 14px; text-transform: uppercase; letter-spacing: 2px;">Reset Password</a>
+                </div>
+                <p style="font-size: 12px; color: #666;">If you didn't request this, please ignore this email or contact support.</p>
+            </div>
+        `;
+
         try {
-            // In a real app: await sendEmail({ ... });
+            await sendEmail({
+                email: user.email,
+                subject: 'Feather White Password Reset',
+                message: `You requested a password reset. Please use the following link: ${resetUrl}`,
+                html
+            });
             res.status(200).json({ success: true, data: 'Email sent' });
         } catch (err) {
             console.error(err);

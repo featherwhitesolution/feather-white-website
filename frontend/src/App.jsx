@@ -12,6 +12,7 @@ import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Policies from './pages/Policies';
 import ResetPassword from './pages/ResetPassword';
+import VerifyEmail from './pages/VerifyEmail';
 import ScrollToTop from './components/ScrollToTop';
 import AdminLogin from './pages/admin/AdminLogin';
 import AdminDashboard from './pages/admin/AdminDashboard';
@@ -49,6 +50,7 @@ function App() {
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/policies/*" element={<Policies />} />
           <Route path="/reset-password/:token" element={<ResetPassword />} />
+          <Route path="/verify-email/:token" element={<VerifyEmail />} />
           
           {/* Admin Routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
