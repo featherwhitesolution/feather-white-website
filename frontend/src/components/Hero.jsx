@@ -70,7 +70,7 @@ const Hero = () => {
     if (slides.length === 0) return null; // Failsafe if no slides are ever returned
 
     return (
-        <section className="relative w-full aspect-[9/16] md:aspect-[1920/830] max-h-[85vh] md:max-h-none min-h-[500px] md:min-h-[300px] overflow-hidden bg-navy-950 border-b border-white/5">
+        <section className="relative w-full aspect-[16/9] md:aspect-[1920/830] max-h-[60vh] md:max-h-none min-h-[220px] md:min-h-[300px] overflow-hidden bg-navy-950 border-b border-white/5">
             
             {/* BACKGROUND IMAGES (Sliding Carousel) */}
             <AnimatePresence initial={false}>
@@ -89,21 +89,11 @@ const Hero = () => {
                         <img 
                             src={optimizeCloudinaryUrl(slides[current].image, 'w_1920,q_auto:eco,f_auto')}
                             alt={slides[current].title}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover object-center"
                         />
                     </div>
-                    
-                    {/* Clean background - no overlays for maximum banner visibility */}
-
-
-
                 </motion.div>
             </AnimatePresence>
-
-            {/* CONTENT CONTAINER REMOVED - Displaying only plain banner */}
-
-
-
         </section>
     );
 };

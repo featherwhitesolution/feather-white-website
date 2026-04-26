@@ -79,19 +79,7 @@ const Checkout = () => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
     };
 
-    const loadRazorpay = () => {
-        return new Promise((resolve) => {
-            const script = document.createElement('script');
-            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-            script.onload = () => {
-                resolve(true);
-            };
-            script.onerror = () => {
-                resolve(false);
-            };
-            document.body.appendChild(script);
-        });
-    };
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -123,9 +111,8 @@ const Checkout = () => {
 
         try {
             if (paymentMethod === 'Online') {
-                const res = await loadRazorpay();
-                if (!res) {
-                    alert('Razorpay SDK failed to load. Are you online?');
+                if (!window.Razorpay) {
+                    alert('Razorpay SDK failed to load. Please check your internet connection or disable ad-blockers.');
                     setIsProcessing(false);
                     return;
                 }
@@ -134,15 +121,16 @@ const Checkout = () => {
                 const { data: rzpOrder } = await api.post('/api/orders/razorpay', { amount: finalTotal });
 
                 const options = {
-                    key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+                    key: import.meta.env.VITE_RAZORPAY_KEY_ID || 'rzp_test_Si8I4d4pQX7Mns', // Fallback to provided test key
                     amount: rzpOrder.amount,
                     currency: rzpOrder.currency,
                     name: "Feather White",
                     description: "Skincare Purchase",
-                    image: "/logo_dark.png", 
+                    image: "/assets/logo.png", 
                     order_id: rzpOrder.id,
                     handler: async function (response) {
                         try {
+                            setIsProcessing(true); // Ensure processing stays true during verification
                             // 2. Once payment done, create the actual order in DB
                             const { data: createdOrder } = await api.post('/api/orders', {
                                 ...orderData,
@@ -173,8 +161,8 @@ const Checkout = () => {
                     },
                     prefill: {
                         name: formData.fullName,
-                        email: formData.email,
-                        contact: formData.phone
+                        email: formData.email.trim(),
+                        contact: formData.phone.replace(/\D/g, '') // Remove non-numeric characters for contact
                     },
                     notes: {
                         address: formData.address

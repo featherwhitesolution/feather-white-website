@@ -73,24 +73,51 @@ const Navbar = () => {
 
                         {/* Desktop Navigation */}
                         <div className="hidden md:flex items-center space-x-10">
-                            {navLinks.map((link) => (
-                                <NavLink
-                                    key={link.path}
-                                    to={link.path}
-                                    className={({ isActive }) =>
-                                        `relative font-sans text-xs font-bold tracking-[0.2em] uppercase transition-all duration-300 group py-2 
-                                        ${isActive ? 'text-gold-500' : 'text-cream-100/70 hover:text-white'}`
-                                    }
-                                >
-                                    {({ isActive }) => (
-                                        <>
-                                            {link.name}
-                                            <span className={`absolute bottom-0 left-0 h-[2px] bg-gold-500 transition-all duration-300 
-                                                ${isActive ? 'w-full' : 'w-0 group-hover:w-full'}`} />
-                                        </>
-                                    )}
-                                </NavLink>
-                            ))}
+                            <NavLink
+                                to="/"
+                                className={({ isActive }) =>
+                                    `relative font-sans text-xs font-bold tracking-[0.2em] uppercase transition-all duration-300 group py-2 
+                                    ${isActive ? 'text-gold-500' : 'text-cream-100/70 hover:text-white'}`
+                                }
+                            >
+                                Home
+                            </NavLink>
+
+                            {/* Shop Dropdown */}
+                            <div className="relative group py-2">
+                                <button className="font-sans text-xs font-bold tracking-[0.2em] uppercase text-cream-100/70 group-hover:text-gold-500 transition-all flex items-center gap-1">
+                                    Shop
+                                    <span className="text-[8px] transition-transform group-hover:rotate-180">▼</span>
+                                </button>
+                                
+                                <div className="absolute left-0 mt-2 w-48 bg-[#0a0c1a] border border-white/10 rounded-xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 transform translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
+                                    {[
+                                        { name: 'All Products', path: '/products' },
+                                        { name: 'Skincare', path: '/products?category=Skincare' },
+                                        { name: 'Haircare', path: '/products?category=Haircare' },
+                                        { name: 'Fragrance', path: '/products?category=Fragrance' },
+                                        { name: 'Makeup', path: '/products?category=Makeup' }
+                                    ].map((item) => (
+                                        <Link 
+                                            key={item.path}
+                                            to={item.path}
+                                            className="block px-6 py-3.5 text-[10px] font-bold uppercase tracking-widest text-cream-100/60 hover:text-gold-500 hover:bg-white/5 transition-all border-b border-white/5 last:border-0"
+                                        >
+                                            {item.name}
+                                        </Link>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <NavLink
+                                to="/about"
+                                className={({ isActive }) =>
+                                    `relative font-sans text-xs font-bold tracking-[0.2em] uppercase transition-all duration-300 group py-2 
+                                    ${isActive ? 'text-gold-500' : 'text-cream-100/70 hover:text-white'}`
+                                }
+                            >
+                                About
+                            </NavLink>
                         </div>
 
                         {/* Icons Section */}
@@ -129,7 +156,7 @@ const Navbar = () => {
                                             initial={{ opacity: 0, scale: 0.95, y: 10 }}
                                             animate={{ opacity: 1, scale: 1, y: 0 }}
                                             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-                                            className="absolute right-0 mt-4 w-56 glass-card rounded-2xl overflow-hidden py-2"
+                                            className="absolute right-0 mt-4 w-56 bg-[#05060b] border border-white/10 rounded-2xl shadow-2xl overflow-hidden py-2"
                                         >
                                             <div className="px-5 py-4 border-b border-white/10 bg-white/5">
                                                 <p className="text-xs font-bold text-gold-400 uppercase tracking-widest">{userInfo.name}</p>
@@ -188,7 +215,7 @@ const Navbar = () => {
                                 animate={{ opacity: 1, x: 0 }}
                                 exit={{ opacity: 0, x: '100%' }}
                                 transition={{ type: "spring", damping: 25, stiffness: 200 }}
-                                className="fixed inset-y-0 right-0 w-[80%] max-w-sm bg-navy-950 border-l border-white/10 z-[50] md:hidden shadow-2xl flex flex-col"
+                                className="fixed inset-y-0 right-0 w-[85%] max-w-sm bg-[#05060b] border-l border-white/10 z-[50] md:hidden shadow-2xl flex flex-col"
                             >
                                 <div className="flex items-center justify-between p-6 border-b border-white/5">
                                     <div className="flex items-center">
@@ -208,18 +235,32 @@ const Navbar = () => {
                                 <div className="flex-1 overflow-y-auto p-8 flex flex-col space-y-8">
                                     <div className="flex flex-col space-y-6">
                                         <p className="text-[10px] uppercase tracking-[0.3em] text-gold-500/50 font-black">Explore</p>
-                                        {navLinks.map((link) => (
-                                            <NavLink
-                                                key={link.path}
-                                                to={link.path}
-                                                className={({ isActive }) =>
-                                                    `text-3xl font-serif tracking-widest transition-all duration-300 ${isActive ? 'text-gold-500 translate-x-2' : 'text-cream-100 hover:translate-x-2'}`
-                                                }
-                                                onClick={() => setIsOpen(false)}
-                                            >
-                                                {link.name}
-                                            </NavLink>
-                                        ))}
+                                        
+                                        <NavLink to="/" onClick={() => setIsOpen(false)} className={({ isActive }) => `text-3xl font-serif tracking-widest ${isActive ? 'text-gold-500' : 'text-cream-100'}`}>Home</NavLink>
+                                        
+                                        <div className="space-y-4">
+                                            <p className="text-3xl font-serif tracking-widest text-cream-100">Shop</p>
+                                            <div className="pl-6 flex flex-col space-y-4 border-l border-gold-500/20">
+                                                {[
+                                                    { name: 'All Products', path: '/products' },
+                                                    { name: 'Skincare', path: '/products?category=Skincare' },
+                                                    { name: 'Haircare', path: '/products?category=Haircare' },
+                                                    { name: 'Fragrance', path: '/products?category=Fragrance' },
+                                                    { name: 'Makeup', path: '/products?category=Makeup' }
+                                                ].map((item) => (
+                                                    <Link 
+                                                        key={item.path} 
+                                                        to={item.path} 
+                                                        onClick={() => setIsOpen(false)}
+                                                        className="text-lg font-sans text-cream-100/60 hover:text-gold-400 uppercase tracking-widest font-bold"
+                                                    >
+                                                        {item.name}
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <NavLink to="/about" onClick={() => setIsOpen(false)} className={({ isActive }) => `text-3xl font-serif tracking-widest ${isActive ? 'text-gold-500' : 'text-cream-100'}`}>About</NavLink>
                                     </div>
 
                                     <div className="pt-8 border-t border-white/5 flex flex-col space-y-6">
